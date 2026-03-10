@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grammar Prompt Split – Vergleich Original vs. Split</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+<div id="root"></div>
+<script type="text/babel">
+const { BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } = Recharts;
+
+const COLORS = {
+  mistral:  "#3b82f6",
+  gemma2:   "#22c55e",
+  deepseek: "#f97316",
+};
+
+const MODELS = ["mistral:latest", "gemma2:9b", "deepseek-r1:8b"];
+const MODEL_LABELS = { "mistral:latest": "Mistral 7B", "gemma2:9b": "Gemma2 9B", "deepseek-r1:8b": "DeepSeek-R1 8B" };
+const MODEL_KEYS  = { "mistral:latest": "mistral", "gemma2:9b": "gemma2", "deepseek-r1:8b": "deepseek" };
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+const original = {
+  label: "Original (Mix)",
+  scores: { "mistral:latest": 25, "gemma2:9b": 33, "deepseek-r1:8b": 30 },
+  maxPts: 40,
+  summaries: {
+    "mistral:latest":  "Mistral erzeugt sprachlich solide Texte, vermischt aber die Übungstypen nicht zuverlässig und hält das Format nicht konsistent ein.",
+    "gemma2:9b":       "Gemma2 liefert den höchsten Score beim Mix, zeigt aber Schwächen beim Einhalten der Antwortformate.",
+    "deepseek-r1:8b":  "DeepSeek produziert durch seinen Reasoning-Prozess längere Antworten, scheitert aber bei klarer Typentrennung.",
+  }
+};
+
+const split = {
+  "teil5a": {
+    label: "Gap-Fill Only",
+    scores: { "mistral:latest": 21, "gemma2:9b": 28, "deepseek-r1:8b": 26 },
+    ranges: { "mistral:latest": "8–28", "gemma2:9b": "15–40", "deepseek-r1:8b": "10–39" },
+    maxPts: 40,
+    summaries: {
+      "mistral:latest":  "8/9 Outputs füllten die Antworttabelle vorab aus. Modell generierte trotz Anweisung auch andere Übungstypen.",
+      "gemma2:9b":       "Einfache Lücken funktionieren gut, bei mehreren Lücken pro Zeile verliert das Modell die Synchronisation zum Antwortschlüssel.",
+      "deepseek-r1:8b":  "Starke Leistung bei einfachen Strukturen, scheitert bei mehreren Lücken pro Satz und macht Fehler im Antwortschlüssel.",
+    }
+  },
+  "teil5b": {
+    label: "Error Correction Only",
+    scores: { "mistral:latest": 13, "gemma2:9b": 22, "deepseek-r1:8b": 26 },
+    ranges: { "mistral:latest": "5–22", "gemma2:9b": "15–32", "deepseek-r1:8b": "15–40" },
+    maxPts: 40,
+    summaries: {
+      "mistral:latest":  "6/9 Outputs ignorierten den Typ und lieferten Gap-Fill statt Error Correction. Schlechtester Score aller Kategorien.",
+      "gemma2:9b":       "Modell fett-markiert korrekte Sätze statt Fehler einzubauen. Nur bei Passive Voice (Outputs 7–9) echte Fehlerkorrektur.",
+      "deepseek-r1:8b":  "Extreme Inkonsistenz: perfekte Outputs (4, 7) neben kompletten Fehlern (2, 5, 9). Beste Error-Correction-Scores im Split.",
+    }
+  },
+  "teil5c": {
+    label: "Sentence Transformation Only",
+    scores: { "mistral:latest": 30, "gemma2:9b": 28, "deepseek-r1:8b": 23 },
+    ranges: { "mistral:latest": "21–40", "gemma2:9b": "20–36", "deepseek-r1:8b": "15–39" },
+    maxPts: 40,
+    summaries: {
+      "mistral:latest":  "Stärkster Split-Score (30/40) – besser als Original. Passiv-Transformationen und Konditionalsätze gut, aber Present Perfect fehlerhaft.",
+      "gemma2:9b":       "Gute Formatierung, aber fehlerhafte Antwortschlüssel (z.B. Present Perfect mit definitiver Vergangenheit). Riskant ohne Überprüfung.",
+      "deepseek-r1:8b":  "Halluziniert Inhalte in Antwortschlüsseln. Gelegentlich perfekt (Output 9), meistens unzuverlässig.",
+    }
+  }
+};
+
+// ── CHART DATA ────────────────────────────────────────────────────────────
+function buildBarData() {
+  return MODELS.map(m => ({
+    model: MODEL_LABELS[m],
+    "Original (Mix)": Math.round((original.scores[m] / original.maxPts) * 100),
+    "Gap-Fill":        Math.round((split.teil5a.scores[m] / 40) * 100),
+    "Error Correction":Math.round((split.teil5b.scores[m] / 40) * 100),
+    "Sentence Transform": Math.round((split.teil5c.scores[m] / 40) * 100),
+  }));
+}
+
+function buildRadarData() {
+  const cats = ["Original (Mix)", "Gap-Fill", "Error Correction", "Sentence Transform"];
+  const srcMap = {
+    "Original (Mix)": original,
+    "Gap-Fill": split.teil5a,
+    "Error Correction": split.teil5b,
+    "Sentence Transform": split.teil5c,
+  };
+  return cats.map(cat => {
+    const src = srcMap[cat];
+    const row = { category: cat };
+    MODELS.forEach(m => {
+      row[MODEL_LABELS[m]] = Math.round((src.scores[m] / src.maxPts) * 100);
+    });
+    return row;
+  });
+}
+
+// ── COMPONENTS ────────────────────────────────────────────────────────────
+function ScoreCard({ model, orig, gf, ec, st }) {
+  const color = COLORS[MODEL_KEYS[model]];
+  const best = Math.max(orig, gf, ec, st);
+  const label = MODEL_LABELS[model];
+  return (
+    <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+      <div className="font-bold text-lg mb-3" style={{color}}>{label}</div>
+      {[
+        { label: "Original (Mix)",        val: orig, max: 40 },
+        { label: "Gap-Fill Only",          val: gf,   max: 40 },
+        { label: "Error Correction Only",  val: ec,   max: 40 },
+        { label: "Sentence Transform Only",val: st,   max: 40 },
+      ].map(({label, val, max}) => (
+        <div key={label} className="mb-2">
+          <div className="flex justify-between text-sm mb-1">
+            <span className={label === "Original (Mix)" ? "text-gray-300 font-semibold" : "text-gray-400"}>{label}</span>
+            <span className={val === best ? "font-bold" : ""} style={{color: val === best ? color : "#9ca3af"}}>
+              {val}/{max} ({Math.round(val/max*100)}%)
+            </span>
+          </div>
+          <div className="bg-gray-700 rounded-full h-2">
+            <div className="h-2 rounded-full transition-all" style={{width: `${val/max*100}%`, backgroundColor: label === "Original (Mix)" ? "#6b7280" : color, opacity: label === "Original (Mix)" ? 0.7 : 1}} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function App() {
+  const barData  = buildBarData();
+  const radarData = buildRadarData();
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 mb-8">
+        <h1 className="text-2xl font-bold mb-1">Grammar Prompt Split – Vergleich</h1>
+        <p className="text-gray-300 text-sm">Feedback-Loop basierend auf William Spragues Empfehlung: Grammatik-Prompt in drei separate Übungstypen aufgeteilt</p>
+        <div className="flex flex-wrap gap-4 mt-4 text-sm">
+          {[
+            { label: "Original Grammatik (Mix)", val: "teil5 – 1 Prompt, 3 Typen" },
+            { label: "Grammar-Split",             val: "teil5a/b/c – 3 Prompts, je 1 Typ" },
+            { label: "Modelle",                   val: "3 (Mistral, Gemma2, DeepSeek)" },
+            { label: "Outputs Split",             val: "81 (27 je Typ)" },
+          ].map(({label, val}) => (
+            <div key={label} className="bg-white/10 rounded-lg px-3 py-2">
+              <div className="text-gray-300 text-xs">{label}</div>
+              <div className="font-semibold">{val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Score Cards */}
+      <h2 className="text-xl font-bold mb-4">Score-Vergleich pro Modell</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {MODELS.map(m => (
+          <ScoreCard key={m} model={m}
+            orig={original.scores[m]}
+            gf={split.teil5a.scores[m]}
+            ec={split.teil5b.scores[m]}
+            st={split.teil5c.scores[m]}
+          />
+        ))}
+      </div>
+
+      {/* Bar Chart */}
+      <div className="bg-gray-800 rounded-xl p-6 mb-8 border border-gray-700">
+        <h2 className="text-xl font-bold mb-1">Normalisierte Scores im Vergleich (%)</h2>
+        <p className="text-gray-400 text-sm mb-4">Original-Mix vs. die drei aufgeteilten Typen – pro Modell nebeneinander</p>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={barData} margin={{top:10,right:20,left:0,bottom:5}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <XAxis dataKey="model" stroke="#9ca3af" />
+            <YAxis stroke="#9ca3af" domain={[0,100]} tickFormatter={v => v + "%"} />
+            <Tooltip
+              contentStyle={{backgroundColor:"#1f2937",border:"1px solid #374151",borderRadius:"8px"}}
+              formatter={(v, name) => [`${v}%`, name]}
+            />
+            <Legend />
+            <ReferenceLine y={0} stroke="#4b5563" />
+            <Bar dataKey="Original (Mix)"      fill="#6b7280" radius={[4,4,0,0]} />
+            <Bar dataKey="Gap-Fill"             fill="#3b82f6" radius={[4,4,0,0]} />
+            <Bar dataKey="Error Correction"     fill="#ef4444" radius={[4,4,0,0]} />
+            <Bar dataKey="Sentence Transform"   fill="#a855f7" radius={[4,4,0,0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Radar Chart */}
+      <div className="bg-gray-800 rounded-xl p-6 mb-8 border border-gray-700">
+        <h2 className="text-xl font-bold mb-1">Radar: Modellleistung nach Übungstyp</h2>
+        <p className="text-gray-400 text-sm mb-4">Jede Achse = ein Übungstyp (normalisiert 0–100%)</p>
+        <ResponsiveContainer width="100%" height={340}>
+          <RadarChart data={radarData}>
+            <PolarGrid stroke="#374151" />
+            <PolarAngleAxis dataKey="category" stroke="#9ca3af" tick={{fontSize:12}} />
+            {MODELS.map(m => (
+              <Radar key={m} name={MODEL_LABELS[m]} dataKey={MODEL_LABELS[m]}
+                stroke={COLORS[MODEL_KEYS[m]]} fill={COLORS[MODEL_KEYS[m]]} fillOpacity={0.15} strokeWidth={2} />
+            ))}
+            <Legend />
+            <Tooltip contentStyle={{backgroundColor:"#1f2937",border:"1px solid #374151",borderRadius:"8px"}} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Detailed Summaries */}
+      <h2 className="text-xl font-bold mb-4">Copilot-Bewertungen im Detail</h2>
+      {[
+        { key: "original", data: original, color: "#6b7280" },
+        { key: "teil5a",   data: split.teil5a, color: "#3b82f6" },
+        { key: "teil5b",   data: split.teil5b, color: "#ef4444" },
+        { key: "teil5c",   data: split.teil5c, color: "#a855f7" },
+      ].map(({key, data, color}) => (
+        <div key={key} className="bg-gray-800 rounded-xl p-5 mb-4 border border-gray-700">
+          <div className="font-bold text-lg mb-3" style={{color}}>{data.label}</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {MODELS.map(m => (
+              <div key={m} className="bg-gray-900 rounded-lg p-3">
+                <div className="font-semibold text-sm mb-1" style={{color: COLORS[MODEL_KEYS[m]]}}>{MODEL_LABELS[m]}</div>
+                <div className="text-lg font-bold mb-1">
+                  {data.scores[m]}/{data.maxPts}
+                  <span className="text-sm text-gray-400 ml-2">({Math.round(data.scores[m]/data.maxPts*100)}%)</span>
+                </div>
+                {data.ranges && <div className="text-xs text-gray-500 mb-2">Range: {data.ranges[m]}/{data.maxPts}</div>}
+                <div className="text-xs text-gray-300 leading-relaxed">{data.summaries[m]}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Key Finding */}
+      <div className="bg-gray-800 rounded-xl p-6 border border-yellow-700/50 mt-4">
+        <h2 className="text-xl font-bold mb-3 text-yellow-400">Zentrale Erkenntnis</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="bg-red-900/30 rounded-lg p-4 border border-red-700/50">
+            <div className="font-bold text-red-400 mb-2">❌ Splitting verbesserte die Scores nicht generell</div>
+            <p className="text-gray-300">Gemma2 fiel von 33 auf max. 28 (Gap-Fill/Transformation). Mistral bei Error Correction eingebrochen (13/40). Die Aufspaltung macht individuelle Schwächen sichtbarer, die im Mix durch andere Typen kaschiert wurden.</p>
+          </div>
+          <div className="bg-green-900/30 rounded-lg p-4 border border-green-700/50">
+            <div className="font-bold text-green-400 mb-2">✅ Sentence Transformation: Mistral gewinnt</div>
+            <p className="text-gray-300">Mistral verbessert sich von 25 (Mix) auf 30/40 bei Sentence Transformation — der einzige Fall wo ein Modell durch die Aufteilung besser wurde. Error Correction ist für alle Modelle der schwierigste Typ.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center text-gray-600 text-xs mt-8">
+        Diplomarbeit Helikon · Grammar-Split Feedback Loop · März 2026
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
