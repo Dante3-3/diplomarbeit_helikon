@@ -1,13 +1,17 @@
 # Grammar-Split: Getestete System- und User-Prompts
+
 Basierend auf Spragues Feedback: Grammatik-Prompt aufgeteilt in drei separate Typen.
-Änderung gegenüber Original: System-Prompt typ-spezifisch angepasst, User-Prompts identisch bis auf letzte Zeile.
+Änderung gegenüber Original teil5: System-Prompt typ-spezifisch angepasst, User-Prompts identisch bis auf letzte Zeile ("Use a mix..." → "Create ONLY...").
 
 ---
+
 ## TEIL5A: Grammatik Gap-Fill
+
 **Kategorie:** Grammar Gap-Fill
 
-### System Prompt
+### System-Prompt – Für alle 3 Tests dieser Kategorie verwenden
 
+```
 **Role Assignment:**
 You are a meticulous and world-class language professor specializing in creating grammar exercises for English language learners. Your expertise includes tailoring exercises to specific CEFR levels (A1–C2), aligning tasks with cognitive demands from Bloom's Taxonomy, and embedding grammar practice within meaningful thematic contexts following CLIL (Content and Language Integrated Learning) principles. You must produce only the requested exercise—without additional commentary or internal notes.
 
@@ -79,13 +83,15 @@ Complete the following exercise on the Passive Voice. Read each question careful
 * Verify exactly one correct answer per task.
 * Ensure the CLIL-theme is maintained throughout.
 * If inputs are insufficient, do not ask for clarification — generate the best possible exercise based on the information provided.
+```
 
 ---
 
-### User Prompts
+### User-Prompts
 
 #### G1a – Present Perfect vs Past Simple – Gap-Fill
 
+```
 Please create a grammar exercise on the topic of Present Perfect vs. Past Simple for CEFR B1 with 8 questions based on the following context text:
 
 "A Trip to London
@@ -99,11 +105,11 @@ My sister has been to London three times already. She lived there for six months
 We have not decided yet where to go next summer, but we have already started saving money for another adventure. Travelling has taught us so much about different cultures, and I believe it is one of the best ways to learn."
 
 Create ONLY gap-fill exercises.
-
----
+```
 
 #### G2a – Conditional Sentences – Gap-Fill
 
+```
 Please create a grammar exercise on the topic of Conditional Sentences Type I and Type II for CEFR B2 with 6 questions based on the following context text:
 
 "Environmental Protection: What Can We Do?
@@ -117,11 +123,11 @@ At the local level, simple actions can make a difference. If you use public tran
 Education also plays a crucial role. If schools taught environmental science from an early age, future generations would be better equipped to address ecological challenges. The question is not whether we can afford to act, but whether we can afford not to."
 
 Create ONLY gap-fill exercises.
-
----
+```
 
 #### G3a – Passive Voice – Gap-Fill
 
+```
 Please create a grammar exercise on the topic of Passive Voice for CEFR B1 with 6 questions based on the following context text:
 
 "How Chocolate is Made: From Bean to Bar
@@ -135,14 +141,17 @@ The cocoa liquor is pressed to separate cocoa butter from cocoa powder. These in
 Finally, the chocolate is poured into moulds and cooled until it hardens. It is then wrapped, packaged, and distributed to shops and supermarkets, where it is bought and enjoyed by millions of people every day."
 
 Create ONLY gap-fill exercises.
+```
 
 ---
 
 ## TEIL5B: Grammatik Error Correction
+
 **Kategorie:** Grammar Error Correction
 
-### System Prompt
+### System-Prompt – Für alle 3 Tests dieser Kategorie verwenden
 
+```
 **Role Assignment:**
 You are a meticulous and world-class language professor specializing in creating grammar exercises for English language learners. Your expertise includes tailoring exercises to specific CEFR levels (A1–C2), aligning tasks with cognitive demands from Bloom's Taxonomy, and embedding grammar practice within meaningful thematic contexts following CLIL (Content and Language Integrated Learning) principles. You must produce only the requested exercise—without additional commentary or internal notes.
 
@@ -214,13 +223,15 @@ Complete the following exercise on the Passive Voice. Read each question careful
 * Verify exactly one correct answer per task.
 * Ensure the CLIL-theme is maintained throughout.
 * If inputs are insufficient, do not ask for clarification — generate the best possible exercise based on the information provided.
+```
 
 ---
 
-### User Prompts
+### User-Prompts
 
 #### G1b – Present Perfect vs Past Simple – Error Correction
 
+```
 Please create a grammar exercise on the topic of Present Perfect vs. Past Simple for CEFR B1 with 8 questions based on the following context text:
 
 "A Trip to London
@@ -234,11 +245,11 @@ My sister has been to London three times already. She lived there for six months
 We have not decided yet where to go next summer, but we have already started saving money for another adventure. Travelling has taught us so much about different cultures, and I believe it is one of the best ways to learn."
 
 Create ONLY error correction exercises.
-
----
+```
 
 #### G2b – Conditional Sentences – Error Correction
 
+```
 Please create a grammar exercise on the topic of Conditional Sentences Type I and Type II for CEFR B2 with 6 questions based on the following context text:
 
 "Environmental Protection: What Can We Do?
@@ -252,11 +263,11 @@ At the local level, simple actions can make a difference. If you use public tran
 Education also plays a crucial role. If schools taught environmental science from an early age, future generations would be better equipped to address ecological challenges. The question is not whether we can afford to act, but whether we can afford not to."
 
 Create ONLY error correction exercises.
-
----
+```
 
 #### G3b – Passive Voice – Error Correction
 
+```
 Please create a grammar exercise on the topic of Passive Voice for CEFR B1 with 6 questions based on the following context text:
 
 "How Chocolate is Made: From Bean to Bar
@@ -270,14 +281,17 @@ The cocoa liquor is pressed to separate cocoa butter from cocoa powder. These in
 Finally, the chocolate is poured into moulds and cooled until it hardens. It is then wrapped, packaged, and distributed to shops and supermarkets, where it is bought and enjoyed by millions of people every day."
 
 Create ONLY error correction exercises.
+```
 
 ---
 
 ## TEIL5C: Grammatik Sentence Transformation
+
 **Kategorie:** Grammar Sentence Transformation
 
-### System Prompt
+### System-Prompt – Für alle 3 Tests dieser Kategorie verwenden
 
+```
 **Role Assignment:**
 You are a meticulous and world-class language professor specializing in creating grammar exercises for English language learners. Your expertise includes tailoring exercises to specific CEFR levels (A1–C2), aligning tasks with cognitive demands from Bloom's Taxonomy, and embedding grammar practice within meaningful thematic contexts following CLIL (Content and Language Integrated Learning) principles. You must produce only the requested exercise—without additional commentary or internal notes.
 
@@ -349,13 +363,15 @@ Complete the following exercise on the Passive Voice. Read each question careful
 * Verify exactly one correct answer per task.
 * Ensure the CLIL-theme is maintained throughout.
 * If inputs are insufficient, do not ask for clarification — generate the best possible exercise based on the information provided.
+```
 
 ---
 
-### User Prompts
+### User-Prompts
 
 #### G1c – Present Perfect vs Past Simple – Sentence Transformation
 
+```
 Please create a grammar exercise on the topic of Present Perfect vs. Past Simple for CEFR B1 with 8 questions based on the following context text:
 
 "A Trip to London
@@ -369,11 +385,11 @@ My sister has been to London three times already. She lived there for six months
 We have not decided yet where to go next summer, but we have already started saving money for another adventure. Travelling has taught us so much about different cultures, and I believe it is one of the best ways to learn."
 
 Create ONLY sentence transformation exercises.
-
----
+```
 
 #### G2c – Conditional Sentences – Sentence Transformation
 
+```
 Please create a grammar exercise on the topic of Conditional Sentences Type I and Type II for CEFR B2 with 6 questions based on the following context text:
 
 "Environmental Protection: What Can We Do?
@@ -387,11 +403,11 @@ At the local level, simple actions can make a difference. If you use public tran
 Education also plays a crucial role. If schools taught environmental science from an early age, future generations would be better equipped to address ecological challenges. The question is not whether we can afford to act, but whether we can afford not to."
 
 Create ONLY sentence transformation exercises.
-
----
+```
 
 #### G3c – Passive Voice – Sentence Transformation
 
+```
 Please create a grammar exercise on the topic of Passive Voice for CEFR B1 with 6 questions based on the following context text:
 
 "How Chocolate is Made: From Bean to Bar
@@ -405,6 +421,7 @@ The cocoa liquor is pressed to separate cocoa butter from cocoa powder. These in
 Finally, the chocolate is poured into moulds and cooled until it hardens. It is then wrapped, packaged, and distributed to shops and supermarkets, where it is bought and enjoyed by millions of people every day."
 
 Create ONLY sentence transformation exercises.
+```
 
 ---
 
