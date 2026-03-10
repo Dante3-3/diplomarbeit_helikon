@@ -91,7 +91,6 @@ Complete the following exercise on the Passive Voice. Read each question careful
 
 #### G1a – Present Perfect vs Past Simple – Gap-Fill
 
-```
 Please create a grammar exercise on the topic of Present Perfect vs. Past Simple for CEFR B1 with 8 questions based on the following context text:
 
 "A Trip to London
@@ -105,11 +104,9 @@ My sister has been to London three times already. She lived there for six months
 We have not decided yet where to go next summer, but we have already started saving money for another adventure. Travelling has taught us so much about different cultures, and I believe it is one of the best ways to learn."
 
 Create ONLY gap-fill exercises.
-```
 
 #### G2a – Conditional Sentences – Gap-Fill
 
-```
 Please create a grammar exercise on the topic of Conditional Sentences Type I and Type II for CEFR B2 with 6 questions based on the following context text:
 
 "Environmental Protection: What Can We Do?
@@ -123,11 +120,9 @@ At the local level, simple actions can make a difference. If you use public tran
 Education also plays a crucial role. If schools taught environmental science from an early age, future generations would be better equipped to address ecological challenges. The question is not whether we can afford to act, but whether we can afford not to."
 
 Create ONLY gap-fill exercises.
-```
 
 #### G3a – Passive Voice – Gap-Fill
 
-```
 Please create a grammar exercise on the topic of Passive Voice for CEFR B1 with 6 questions based on the following context text:
 
 "How Chocolate is Made: From Bean to Bar
@@ -141,7 +136,6 @@ The cocoa liquor is pressed to separate cocoa butter from cocoa powder. These in
 Finally, the chocolate is poured into moulds and cooled until it hardens. It is then wrapped, packaged, and distributed to shops and supermarkets, where it is bought and enjoyed by millions of people every day."
 
 Create ONLY gap-fill exercises.
-```
 
 ---
 
@@ -231,7 +225,6 @@ Complete the following exercise on the Passive Voice. Read each question careful
 
 #### G1b – Present Perfect vs Past Simple – Error Correction
 
-```
 Please create a grammar exercise on the topic of Present Perfect vs. Past Simple for CEFR B1 with 8 questions based on the following context text:
 
 "A Trip to London
@@ -245,11 +238,9 @@ My sister has been to London three times already. She lived there for six months
 We have not decided yet where to go next summer, but we have already started saving money for another adventure. Travelling has taught us so much about different cultures, and I believe it is one of the best ways to learn."
 
 Create ONLY error correction exercises.
-```
 
 #### G2b – Conditional Sentences – Error Correction
 
-```
 Please create a grammar exercise on the topic of Conditional Sentences Type I and Type II for CEFR B2 with 6 questions based on the following context text:
 
 "Environmental Protection: What Can We Do?
@@ -263,11 +254,9 @@ At the local level, simple actions can make a difference. If you use public tran
 Education also plays a crucial role. If schools taught environmental science from an early age, future generations would be better equipped to address ecological challenges. The question is not whether we can afford to act, but whether we can afford not to."
 
 Create ONLY error correction exercises.
-```
 
 #### G3b – Passive Voice – Error Correction
 
-```
 Please create a grammar exercise on the topic of Passive Voice for CEFR B1 with 6 questions based on the following context text:
 
 "How Chocolate is Made: From Bean to Bar
@@ -281,7 +270,6 @@ The cocoa liquor is pressed to separate cocoa butter from cocoa powder. These in
 Finally, the chocolate is poured into moulds and cooled until it hardens. It is then wrapped, packaged, and distributed to shops and supermarkets, where it is bought and enjoyed by millions of people every day."
 
 Create ONLY error correction exercises.
-```
 
 ---
 
@@ -371,7 +359,6 @@ Complete the following exercise on the Passive Voice. Read each question careful
 
 #### G1c – Present Perfect vs Past Simple – Sentence Transformation
 
-```
 Please create a grammar exercise on the topic of Present Perfect vs. Past Simple for CEFR B1 with 8 questions based on the following context text:
 
 "A Trip to London
@@ -385,11 +372,9 @@ My sister has been to London three times already. She lived there for six months
 We have not decided yet where to go next summer, but we have already started saving money for another adventure. Travelling has taught us so much about different cultures, and I believe it is one of the best ways to learn."
 
 Create ONLY sentence transformation exercises.
-```
 
 #### G2c – Conditional Sentences – Sentence Transformation
 
-```
 Please create a grammar exercise on the topic of Conditional Sentences Type I and Type II for CEFR B2 with 6 questions based on the following context text:
 
 "Environmental Protection: What Can We Do?
@@ -403,11 +388,9 @@ At the local level, simple actions can make a difference. If you use public tran
 Education also plays a crucial role. If schools taught environmental science from an early age, future generations would be better equipped to address ecological challenges. The question is not whether we can afford to act, but whether we can afford not to."
 
 Create ONLY sentence transformation exercises.
-```
 
 #### G3c – Passive Voice – Sentence Transformation
 
-```
 Please create a grammar exercise on the topic of Passive Voice for CEFR B1 with 6 questions based on the following context text:
 
 "How Chocolate is Made: From Bean to Bar
@@ -421,7 +404,6 @@ The cocoa liquor is pressed to separate cocoa butter from cocoa powder. These in
 Finally, the chocolate is poured into moulds and cooled until it hardens. It is then wrapped, packaged, and distributed to shops and supermarkets, where it is bought and enjoyed by millions of people every day."
 
 Create ONLY sentence transformation exercises.
-```
 
 ---
 
