@@ -332,8 +332,8 @@ def main():
             else:
                 print(f"  CONTENT REVIEW PASSED")
 
-            # ── Cooling pause if retry generation was slow ──
-            if revised and revision_elapsed > 300:
+            # ── Cooling pause if any generation was slow ──
+            if revision_elapsed > 300:
                 print(f"  [COOLING] Retry took {revision_elapsed:.0f}s — pausing 60s to cool down...")
                 time.sleep(60)
 

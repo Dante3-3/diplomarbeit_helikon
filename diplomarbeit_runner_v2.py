@@ -375,8 +375,9 @@ def main():
                             print(f"  REVIEW PASSED")
 
                         # ── Cooling pause if generation was slow ──
-                        if elapsed > 300:
-                            print(f"  [COOLING] Output took {elapsed:.0f}s — pausing 60s to cool down...")
+                        if elapsed > 300 or revision_elapsed > 300:
+                            slow = max(elapsed, revision_elapsed)
+                            print(f"  [COOLING] Output took {slow:.0f}s — pausing 60s to cool down...")
                             time.sleep(60)
 
                         # ── Step 3: Save result ──
