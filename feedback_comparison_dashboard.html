@@ -33,43 +33,44 @@ const CATEGORIES = [
 const MODELS = ['mistral:latest', 'gemma2:9b', 'qwen3.5:9b'];
 const MODEL_LABELS = { 'mistral:latest': 'Mistral', 'gemma2:9b': 'Gemma2', 'qwen3.5:9b': 'Qwen3.5' };
 
-// Scores: orig = languages branch (V1-V3), v2 = post-structural, v3 = post-content
-// null = not tested in that run
+// Scores: orig = languages branch (V1-V3, Prompts 1-3), v2 = post-structural, v3 = post-content
+// Orig uses deepseek-r1:8b as 3rd model; V2/V3 use qwen3.5:9b → orig for qwen = null
+// All scores evaluated with GPT-5.4 (avg of 2 runs for orig, 1 run for v2/v3)
 const SCORES = {
   'teil2': {
-    'mistral:latest': { orig: 34.0, v2: 23.0, v3: 26.0, max: 40 },
-    'gemma2:9b':      { orig: 39.1, v2: 36.0, v3: 36.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 33.0, v3: 16.0, max: 40 },
+    'mistral:latest': { orig: 29.5, v2: 25.0, v3: 24.0, max: 40 },
+    'gemma2:9b':      { orig: 35.9, v2: 32.0, v3: 34.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2: 32.0, v3: 22.0, max: 40 },
   },
   'teil3': {
-    'mistral:latest': { orig: 32.0, v2: 38.0, v3: 31.0, max: 45 },
-    'gemma2:9b':      { orig: 33.0, v2: 37.0, v3: 38.0, max: 45 },
-    'qwen3.5:9b':     { orig: null, v2: 32.0, v3: 32.0, max: 45 },
+    'mistral:latest': { orig: 29.0, v2: 27.0, v3: 28.0, max: 45 },
+    'gemma2:9b':      { orig: 35.0, v2: 32.0, v3: 34.0, max: 45 },
+    'qwen3.5:9b':     { orig: null, v2: 30.0, v3: 30.0, max: 45 },
   },
   'teil4': {
-    'mistral:latest': { orig: null, v2: 24.0, v3: 16.0, max: 40 },
-    'gemma2:9b':      { orig: null, v2: 37.0, v3: 38.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 36.0, v3: 36.0, max: 40 },
+    'mistral:latest': { orig: 21.3, v2: 22.0, v3: 23.0, max: 40 },
+    'gemma2:9b':      { orig: 28.7, v2: 36.0, v3: 31.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2: 31.0, v3: 29.0, max: 40 },
   },
   'teil5': {
-    'mistral:latest': { orig: null, v2: 18.0, v3: 10.0, max: 40 },
-    'gemma2:9b':      { orig: 33.0, v2: 15.0, v3: 22.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 19.0, v3: 10.0, max: 40 },
+    'mistral:latest': { orig: 18.4, v2: 18.0, v3: 21.0, max: 40 },
+    'gemma2:9b':      { orig: 30.3, v2: 27.0, v3: 24.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2: 19.0, v3: 15.0, max: 40 },
   },
   'teil6': {
-    'mistral:latest': { orig: 33.0, v2: 26.0, v3: 22.0, max: 40 },
-    'gemma2:9b':      { orig: null, v2: 39.0, v3: 40.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 39.0, v3: 36.0, max: 40 },
+    'mistral:latest': { orig: 28.6, v2: 25.0, v3: 26.0, max: 40 },
+    'gemma2:9b':      { orig: 36.0, v2: 37.0, v3: 36.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2: 35.0, v3: 35.0, max: 40 },
   },
   'teil7': {
-    'mistral:latest': { orig: 26.0, v2: 12.0, v3: 10.0, max: 40 },
-    'gemma2:9b':      { orig: 28.1, v2: 20.0, v3: 29.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 26.0, v3: 18.0, max: 40 },
+    'mistral:latest': { orig: 23.4, v2: 21.0, v3: 24.0, max: 40 },
+    'gemma2:9b':      { orig: 25.3, v2: 31.0, v3: 26.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2: 23.0, v3: 24.0, max: 40 },
   },
   'teil8': {
-    'mistral:latest': { orig: null, v2: 14.0, v3: 12.0, max: 40 },
-    'gemma2:9b':      { orig: 25.0, v2: 22.0, v3: 16.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 11.0, v3: 10.0, max: 40 },
+    'mistral:latest': { orig: 14.0, v2: 12.0, v3: 12.0, max: 40 },
+    'gemma2:9b':      { orig: 20.5, v2: 16.0, v3: 17.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2: 15.0, v3: 12.0, max: 40 },
   },
 };
 
@@ -283,10 +284,11 @@ function App() {
       <div>
         <h1 className="text-3xl font-bold text-white">Feedback Loop Comparison Dashboard</h1>
         <p className="text-gray-400 mt-1">Vergleich: Originaler Run → V2 (Strukturcheck) → V3 (Inhaltscheck)</p>
-        <div className="flex gap-4 mt-3 text-xs text-gray-500">
-          <span><span className="inline-block w-3 h-3 rounded mr-1" style={{background: COLORS.orig}}></span>Orig: languages branch, Prompts 1-3, 3 Modelle (mistral/gemma2/deepseek)</span>
-          <span><span className="inline-block w-3 h-3 rounded mr-1" style={{background: COLORS.v2}}></span>V2: Prompts 4-5, +qwen2.5:3b Strukturcheck</span>
+        <div className="flex gap-4 mt-3 text-xs text-gray-500 flex-wrap">
+          <span><span className="inline-block w-3 h-3 rounded mr-1" style={{background: COLORS.orig}}></span>Orig: languages branch, Prompts 1-3, mistral/gemma2/deepseek</span>
+          <span><span className="inline-block w-3 h-3 rounded mr-1" style={{background: COLORS.v2}}></span>V2: Prompts 4-5, mistral/gemma2/qwen3.5, +qwen2.5:3b Strukturcheck</span>
           <span><span className="inline-block w-3 h-3 rounded mr-1" style={{background: COLORS.v3}}></span>V3: +qwen2.5:7b Inhaltscheck</span>
+          <span className="text-yellow-500">★ Alle Scores bewertet mit GPT-5.4 (GitHub Copilot)</span>
         </div>
       </div>
 
@@ -362,10 +364,10 @@ function App() {
         <h2 className="text-xl font-semibold mb-4 text-gray-200">Key Findings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
-            { title: "Strukturcheck sehr streng", text: "96% aller V2-Outputs wurden vom qwen2.5:3b Reviewer beanstandet und überarbeitet. Der Reviewer war möglicherweise zu streng — nicht jede Beanstandung führte zwingend zu einem besseren Output.", color: "border-cyan-700" },
-            { title: "Inhaltscheck gemischte Ergebnisse", text: "79% der Outputs wurden vom qwen2.5:7b Reviewer beanstandet. Bei Gemma2 verbesserte sich Grammar (+7), Gap-Fill (+9). Bei Mistral und Qwen3.5 verschlechterten sich viele Kategorien nach dem Inhaltscheck.", color: "border-emerald-700" },
-            { title: "Gemma2 profitiert am meisten", text: "Gemma2 ist das einzige Modell das konsistent von den Feedback-Loops profitiert, besonders bei Gap-Fill (v2: 20 → v3: 29) und Grammar (v2: 15 → v3: 22).", color: "border-blue-700" },
-            { title: "Qwen3.5 zeitlich problematisch", text: "Qwen3.5:9b brauchte im Schnitt 133s pro Generierung, mit Peaks bis 663s. Für den Praxiseinsatz im Feedback-Loop ist das zu langsam — der Zeitaufwand lohnt sich nur wenn die Qualitätsverbesserung signifikant ist.", color: "border-yellow-700" },
+            { title: "Feedback-Loop kaum Verbesserung", text: "Mit GPT-5.4 als Evaluator zeigt sich: der Feedback-Loop verbessert die Scores kaum. Mistral und Gemma2 schneiden in V2/V3 meist gleich oder schlechter ab als im Orig-Run — trotz 96% Strukturcheck-FAIL und 79% Inhaltscheck-FAIL.", color: "border-cyan-700" },
+            { title: "Inhaltscheck: Mistral leicht besser, andere schlechter", text: "V3 (Inhaltscheck) hilft Mistral marginal (+3 Grammar, +3 Gap-Fill), schadet aber Gemma2 (SC: 36→31, Gap-Fill: 31→26) und Qwen3.5 deutlich (Vocab: 32→22, Grammar: 19→15). Der Content-Reviewer erzeugt möglicherweise fehlerhafte Korrekturen.", color: "border-emerald-700" },
+            { title: "Evaluator-Konsistenz: GPT-5.4 zuverlässiger", text: "Copilot (alter Evaluator) zeigte massive Schwankungen: SC Mistral 37↔17, Gemma2 26↔39 auf denselben Outputs. GPT-5.4 weicht zwischen zwei Runs nur um ±1-3 Punkte ab — deutlich reproduzierbarer.", color: "border-blue-700" },
+            { title: "Qwen3.5 enttäuscht bei späteren Prompts", text: "Qwen3.5:9b schneidet in V2/V3 (Prompts 4-5) schwächer ab als erwartet, besonders bei Grammar (19) und Orthography (15). Zusätzlich ist es mit Ø 133s/Output das langsamste Modell — schlechte Kosten-Nutzen-Relation im Feedback-Loop.", color: "border-yellow-700" },
           ].map(f => (
             <div key={f.title} className={`bg-gray-800 rounded-xl p-4 border ${f.color}`}>
               <div className="font-semibold text-white mb-2">{f.title}</div>
