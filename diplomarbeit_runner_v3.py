@@ -140,6 +140,17 @@ Respond with JSON only.""",
 }
 
 
+def unload_model(model):
+    """Unload model from RAM via Ollama API."""
+    payload = json.dumps({"model": model, "keep_alive": 0})
+    subprocess.run(
+        ["curl", "-s", "-X", "POST", "http://localhost:11434/api/generate",
+         "-H", "Content-Type: application/json", "-d", payload],
+        capture_output=True, timeout=10
+    )
+    print(f"  [RAM] Unloaded {model}")
+
+
 def call_ollama(model, system_prompt, user_prompt, timeout=TIMEOUT):
     payload = {
         "model": model,
@@ -255,6 +266,8 @@ def main():
     print(f"Already completed: {len(done)} entries")
 
     total = len(v2_entries)
+    current_generation_model = None
+    current_reviewer_loaded = False
 
     with open(RESULTS_FILE, "a") as out_f:
         for i, v2_entry in enumerate(v2_entries):
@@ -268,6 +281,12 @@ def main():
                 continue
 
             print(f"\n[{i+1}/{total}] {teil_key} | {model} | {test_id} | Rep {rep}")
+
+            # Unload previous generation model if switching to a new one
+            if current_generation_model and current_generation_model != model:
+                unload_model(current_generation_model)
+                time.sleep(2)
+            current_generation_model = model
 
             lookup = prompt_lookup.get((teil_key, test_id))
             if not lookup:
@@ -294,6 +313,9 @@ def main():
             elif not content_pass:
                 print(f"  CONTENT REVIEW FAILED: {content_issues}")
                 print(f"  Regenerating with content feedback...")
+                # Unload reviewer before loading generation model
+                unload_model(REVIEWER_MODEL)
+                time.sleep(2)
                 retry_prompt = build_content_retry_prompt(user_prompt, content_issues)
                 try:
                     revised_response, revision_elapsed = call_ollama(

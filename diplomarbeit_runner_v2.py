@@ -189,6 +189,17 @@ Respond with JSON only."""
 }
 
 
+def unload_model(model):
+    """Unload model from RAM via Ollama API."""
+    payload = json.dumps({"model": model, "keep_alive": 0})
+    subprocess.run(
+        ["curl", "-s", "-X", "POST", "http://localhost:11434/api/generate",
+         "-H", "Content-Type: application/json", "-d", payload],
+        capture_output=True, timeout=10
+    )
+    print(f"  [RAM] Unloaded {model}")
+
+
 def call_ollama(model, system_prompt, user_prompt, timeout=TIMEOUT):
     """Call Ollama API, returns (response_text, elapsed_seconds) or raises."""
     payload = {
@@ -346,7 +357,9 @@ def main():
                         if not review_pass:
                             print(f"  REVIEW FAILED: {review_issues}")
                             print(f"  Regenerating with feedback...")
-
+                            # Unload reviewer before reloading generation model
+                            unload_model(REVIEWER_MODEL)
+                            time.sleep(2)
                             retry_prompt = build_retry_prompt(user_prompt, initial_response, review_issues)
                             try:
                                 revised_response, revision_elapsed = call_ollama(model, system_prompt, retry_prompt)
