@@ -374,6 +374,11 @@ def main():
                         else:
                             print(f"  REVIEW PASSED")
 
+                        # ── Cooling pause if generation was slow ──
+                        if elapsed > 300:
+                            print(f"  [COOLING] Output took {elapsed:.0f}s — pausing 60s to cool down...")
+                            time.sleep(60)
+
                         # ── Step 3: Save result ──
                         entry = {
                             "teil": teil_key,
