@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Helikon – Master Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
+  <script>window.PropTypes = window.PropTypes || window.propTypes;</script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+  <style>
+    body { background: #030712; color: #f9fafb; font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const {
+      BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+      XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
+      Cell
+    } = Recharts;
+
+    // ─── DATA ───────────────────────────────────────────────────────────────
+    const CATS = [
+      { key: 'vocab',   name: 'Vocabulary',       max: 40 },
+      { key: 'mc',      name: 'Multiple Choice',  max: 45 },
+      { key: 'sc',      name: 'Sent. Completion', max: 40 },
+      { key: 'grammar', name: 'Grammar',          max: 40 },
+      { key: 'tf',      name: 'True/False',       max: 40 },
+      { key: 'gapfill', name: 'Gap-Fill',         max: 40 },
+      { key: 'ortho',   name: 'Orthography',      max: 40 },
+    ];
+
+    const ORIG = {
+      mistral:  { vocab:29.5, mc:29.0, sc:21.3, grammar:18.4, tf:28.6, gapfill:23.4, ortho:14.0 },
+      gemma2:   { vocab:35.9, mc:35.0, sc:28.7, grammar:30.3, tf:36.0, gapfill:25.3, ortho:20.5 },
+      deepseek: { vocab:29.2, mc:37.3, sc:27.0, grammar:25.6, tf:27.3, gapfill:24.6, ortho:18.2 },
+      eurollm:  { vocab:null, mc:null,  sc:null,  grammar:null,  tf:null,  gapfill:null,  ortho:20.1 },
+    };
+
+    const V2I = {
+      mistral: { vocab:29, mc:29, sc:25, grammar:19, tf:31, gapfill:25, ortho:14 },
+      gemma2:  { vocab:33, mc:35, sc:35, grammar:23, tf:36, gapfill:29, ortho:18 },
+      qwen:    { vocab:25, mc:34, sc:29, grammar:19, tf:31, gapfill:22, ortho:17 },
+    };
+
+    const V2 = {
+      mistral: { vocab:25, mc:27, sc:22, grammar:18, tf:25, gapfill:21, ortho:12 },
+      gemma2:  { vocab:32, mc:32, sc:36, grammar:27, tf:37, gapfill:31, ortho:16 },
+      qwen:    { vocab:32, mc:30, sc:31, grammar:19, tf:35, gapfill:23, ortho:15 },
+    };
+
+    const V3 = {
+      mistral: { vocab:24, mc:28, sc:23, grammar:21, tf:26, gapfill:24, ortho:12 },
+      gemma2:  { vocab:34, mc:34, sc:31, grammar:24, tf:36, gapfill:26, ortho:17 },
+      qwen:    { vocab:22, mc:30, sc:29, grammar:15, tf:35, gapfill:24, ortho:12 },
+    };
+
+    const GSPLIT = {
+      mistral:  { gapfill:16, errorcorr:11, transform:25 },
+      gemma2:   { gapfill:25, errorcorr:15, transform:21 },
+      deepseek: { gapfill:27, errorcorr:19, transform:11 },
+    };
+    // Unified grammar orig: mistral:18.4, gemma2:30.3, deepseek:25.6
+
+    const FB_STATS = {
+      v2: { total:126, failRate:96, revised:121 },
+      v3: { total:108, failRate:79, revised:84, humanReview:18 },
+    };
+
+    // ─── COLORS ─────────────────────────────────────────────────────────────
+    const COLORS = {
+      mistral:  '#f59e0b',
+      gemma2:   '#60a5fa',
+      deepseek: '#f472b6',
+      qwen:     '#a78bfa',
+      eurollm:  '#34d399',
+    };
+
+    // ─── HELPERS ─────────────────────────────────────────────────────────────
+    const pct = (score, max) => score == null ? null : Math.round(100 * score / max);
+
+    const heatColor = (p) => {
+      if (p == null) return '#1f2937';
+      return `hsl(${p * 1.2}, 70%, 30%)`;
+    };
+
+    const avgPct = (modelData, dataSource) => {
+      const vals = CATS.map(c => {
+        const s = dataSource[modelData]?.[c.key];
+        return s != null ? pct(s, c.max) : null;
+      }).filter(v => v != null);
+      return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+    };
+
+    const bestWorst = (model, dataSource) => {
+      let best = null, worst = null, bestVal = -1, worstVal = 999;
+      CATS.forEach(c => {
+        const s = dataSource[model]?.[c.key];
+        if (s == null) return;
+        const p = pct(s, c.max);
+        if (p > bestVal) { bestVal = p; best = c.name; }
+        if (p < worstVal) { worstVal = p; worst = c.name; }
+      });
+      return { best, bestVal, worst, worstVal };
+    };
+
+    // ─── COMPONENTS ──────────────────────────────────────────────────────────
+
+    const DeltaBadge = ({ val }) => {
+      if (val === 0 || val === null) return <span className="inline-block px-2 py-0.5 text-xs rounded bg-gray-700 text-gray-400">±0</span>;
+      const pos = val > 0;
+      return (
+        <span className={`inline-block px-2 py-0.5 text-xs rounded font-semibold ${pos ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+          {pos ? '+' : ''}{val}
+        </span>
+      );
+    };
+
+    const Card = ({ children, className = '' }) => (
+      <div className={`bg-gray-800 border border-gray-700 rounded-xl p-4 ${className}`}>
+        {children}
+      </div>
+    );
+
+    const SectionTitle = ({ children }) => (
+      <h2 className="text-lg font-bold text-gray-100 mb-4">{children}</h2>
+    );
+
+    // ─── CUSTOM TOOLTIP ───────────────────────────────────────────────────────
+    const CustomTooltip = ({ active, payload, label }) => {
+      if (!active || !payload || !payload.length) return null;
+      return (
+        <div className="bg-gray-900 border border-gray-600 rounded-lg p-3 text-xs shadow-xl">
+          <p className="text-gray-300 font-semibold mb-1">{label}</p>
+          {payload.map((entry, i) => (
+            <p key={i} style={{ color: entry.color }}>
+              {entry.name}: {entry.value != null ? entry.value : '–'}
+            </p>
+          ))}
+        </div>
+      );
+    };
+
+    // ─── TAB 1: GESAMTÜBERSICHT ───────────────────────────────────────────────
+    const TabGesamtuebersicht = () => {
+      // Build heatmap data: ORIG for mistral/gemma2/deepseek/eurollm, V2I for qwen
+      const heatModels = [
+        { key: 'mistral',  label: 'Mistral',       src: ORIG },
+        { key: 'gemma2',   label: 'Gemma2',        src: ORIG },
+        { key: 'deepseek', label: 'DeepSeek',      src: ORIG },
+        { key: 'qwen',     label: 'Qwen (P4–5)',   src: V2I  },
+        { key: 'eurollm',  label: 'EuroLLM',       src: ORIG },
+      ];
+
+      // Radar data
+      const radarData = CATS.map(c => {
+        const entry = { cat: c.name };
+        entry['Mistral']  = pct(ORIG.mistral[c.key],  c.max);
+        entry['Gemma2']   = pct(ORIG.gemma2[c.key],   c.max);
+        entry['DeepSeek'] = pct(ORIG.deepseek[c.key], c.max);
+        entry['Qwen']     = pct(V2I.qwen[c.key],      c.max);
+        return entry;
+      });
+
+      // Bar chart data (normalized %)
+      const barData = CATS.map(c => ({
+        name: c.name,
+        Mistral:  pct(ORIG.mistral[c.key],  c.max),
+        Gemma2:   pct(ORIG.gemma2[c.key],   c.max),
+        DeepSeek: pct(ORIG.deepseek[c.key], c.max),
+        Qwen:     pct(V2I.qwen[c.key],      c.max),
+      }));
+
+      return (
+        <div className="space-y-6">
+          {/* Info Badge */}
+          <div className="bg-indigo-950 border border-indigo-700 rounded-xl p-4 text-sm text-indigo-200">
+            <span className="font-semibold text-indigo-300">ℹ Info: </span>
+            Alle Scores bewertet mit GPT-5.4 (GitHub Copilot). Orig-Run: Prompts 1–3 (mistral/gemma2/deepseek).
+            Qwen: Prompts 4–5 ohne Feedback. EuroLLM: nur Orthography.
+          </div>
+
+          {/* Heatmap */}
+          <Card>
+            <SectionTitle>Score-Übersicht (Heatmap)</SectionTitle>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-2 pr-4 text-gray-400 font-semibold">Kategorie</th>
+                    {heatModels.map(m => (
+                      <th key={m.key} className="text-center py-2 px-3 font-semibold" style={{ color: COLORS[m.key] }}>
+                        {m.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CATS.map(c => (
+                    <tr key={c.key} className="border-b border-gray-800 hover:bg-gray-750">
+                      <td className="py-2 pr-4 text-gray-300 font-medium">{c.name}</td>
+                      {heatModels.map(m => {
+                        const score = m.src[m.key]?.[c.key];
+                        const p = pct(score, c.max);
+                        return (
+                          <td key={m.key} className="text-center py-2 px-3">
+                            {score != null ? (
+                              <span
+                                className="inline-block px-2 py-1 rounded text-xs font-semibold"
+                                style={{ background: heatColor(p), color: '#e5e7eb' }}
+                              >
+                                {score}/{c.max}
+                              </span>
+                            ) : (
+                              <span className="text-gray-600 text-xs">–</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-xs text-gray-500 mt-2">* Qwen-Spalte: Prompts 4–5 (V2-initial, kein Feedback). Farbe: rot = niedrig, grün = hoch.</p>
+            </div>
+          </Card>
+
+          {/* Radar + Bar side by side */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <Card>
+              <SectionTitle>Radar-Vergleich (normalisiert 0–100%)</SectionTitle>
+              <ResponsiveContainer width="100%" height={340}>
+                <RadarChart data={radarData}>
+                  <PolarGrid stroke="#374151" />
+                  <PolarAngleAxis dataKey="cat" tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 9 }} />
+                  <Radar name="Mistral"  dataKey="Mistral"  stroke={COLORS.mistral}  fill={COLORS.mistral}  fillOpacity={0.1} strokeWidth={2} />
+                  <Radar name="Gemma2"   dataKey="Gemma2"   stroke={COLORS.gemma2}   fill={COLORS.gemma2}   fillOpacity={0.1} strokeWidth={2} />
+                  <Radar name="DeepSeek" dataKey="DeepSeek" stroke={COLORS.deepseek} fill={COLORS.deepseek} fillOpacity={0.1} strokeWidth={2} />
+                  <Radar name="Qwen"     dataKey="Qwen"     stroke={COLORS.qwen}     fill={COLORS.qwen}     fillOpacity={0.1} strokeWidth={2} />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  <Tooltip content={<CustomTooltip />} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card>
+              <SectionTitle>Kategorienvergleich (% vom Maximum)</SectionTitle>
+              <ResponsiveContainer width="100%" height={340}>
+                <BarChart data={barData} margin={{ top: 5, right: 10, left: -10, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10 }} angle={-30} textAnchor="end" interval={0} />
+                  <YAxis domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 10 }} unit="%" />
+                  <Tooltip content={<CustomTooltip />} formatter={(v) => `${v}%`} />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  <Bar dataKey="Mistral"  fill={COLORS.mistral}  radius={[2,2,0,0]} />
+                  <Bar dataKey="Gemma2"   fill={COLORS.gemma2}   radius={[2,2,0,0]} />
+                  <Bar dataKey="DeepSeek" fill={COLORS.deepseek} radius={[2,2,0,0]} />
+                  <Bar dataKey="Qwen"     fill={COLORS.qwen}     radius={[2,2,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+        </div>
+      );
+    };
+
+    // ─── TAB 2: ORIGINAL RUN ─────────────────────────────────────────────────
+    const TabOriginalRun = () => {
+      const barData = CATS.map(c => ({
+        name: c.name,
+        Mistral:  pct(ORIG.mistral[c.key],  c.max),
+        Gemma2:   pct(ORIG.gemma2[c.key],   c.max),
+        DeepSeek: pct(ORIG.deepseek[c.key], c.max),
+        EuroLLM:  c.key === 'ortho' ? pct(ORIG.eurollm.ortho, c.max) : null,
+      }));
+
+      const models = [
+        { key: 'mistral',  label: 'Mistral',  src: ORIG },
+        { key: 'gemma2',   label: 'Gemma2',   src: ORIG },
+        { key: 'deepseek', label: 'DeepSeek', src: ORIG },
+        { key: 'eurollm',  label: 'EuroLLM',  src: ORIG },
+      ];
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-100 mb-1">Original Run – Prompts 1–3</h2>
+            <p className="text-gray-400 text-sm">Modelle: mistral / gemma2 / deepseek-r1:8b / EuroLLM (nur Ortho)</p>
+          </div>
+
+          {/* Grouped bar chart */}
+          <Card>
+            <SectionTitle>Score-Vergleich nach Kategorie (% vom Maximum)</SectionTitle>
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart data={barData} margin={{ top: 5, right: 10, left: -10, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10 }} angle={-30} textAnchor="end" interval={0} />
+                <YAxis domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 10 }} unit="%" />
+                <Tooltip content={<CustomTooltip />} formatter={(v) => v != null ? `${v}%` : '–'} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="Mistral"  fill={COLORS.mistral}  radius={[2,2,0,0]} />
+                <Bar dataKey="Gemma2"   fill={COLORS.gemma2}   radius={[2,2,0,0]} />
+                <Bar dataKey="DeepSeek" fill={COLORS.deepseek} radius={[2,2,0,0]} />
+                <Bar dataKey="EuroLLM"  fill={COLORS.eurollm}  radius={[2,2,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+
+          {/* Score table */}
+          <Card>
+            <SectionTitle>Score-Tabelle</SectionTitle>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-2 pr-4 text-gray-400 font-semibold">Kategorie</th>
+                    {models.map(m => (
+                      <th key={m.key} className="text-center py-2 px-3 font-semibold" style={{ color: COLORS[m.key] }}>{m.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CATS.map(c => (
+                    <tr key={c.key} className="border-b border-gray-800">
+                      <td className="py-2 pr-4 text-gray-300 font-medium">{c.name}</td>
+                      {models.map(m => {
+                        const score = m.src[m.key]?.[c.key];
+                        const p = pct(score, c.max);
+                        return (
+                          <td key={m.key} className="text-center py-2 px-3">
+                            {score != null ? (
+                              <div>
+                                <span className="text-gray-200 font-semibold">{score}/{c.max}</span>
+                                <br />
+                                <span className="text-gray-500 text-xs">{p}%</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-600 text-xs">–</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Model summary cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {['mistral','gemma2','deepseek'].map(m => {
+              const avg = avgPct(m, ORIG);
+              const { best, bestVal, worst, worstVal } = bestWorst(m, ORIG);
+              const modelLabels = { mistral:'Mistral', gemma2:'Gemma2', deepseek:'DeepSeek' };
+              return (
+                <Card key={m}>
+                  <div className="text-center mb-3">
+                    <span className="text-lg font-bold" style={{ color: COLORS[m] }}>{modelLabels[m]}</span>
+                  </div>
+                  <div className="text-center mb-4">
+                    <span className="text-4xl font-black text-gray-100">{avg}%</span>
+                    <p className="text-xs text-gray-500 mt-1">Ø über alle Kategorien</p>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Beste Kategorie</span>
+                      <span>
+                        <span className="text-green-400 font-semibold">{best}</span>
+                        <span className="text-gray-500 text-xs ml-1">({bestVal}%)</span>
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Schwächste Kategorie</span>
+                      <span>
+                        <span className="text-red-400 font-semibold">{worst}</span>
+                        <span className="text-gray-500 text-xs ml-1">({worstVal}%)</span>
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    // ─── TAB 3: GRAMMAR SPLIT ────────────────────────────────────────────────
+    const TabGrammarSplit = () => {
+      const UNIFIED = { mistral: 18.4, gemma2: 30.3, deepseek: 25.6 };
+      const modelList = [
+        { key: 'mistral',  label: 'Mistral'  },
+        { key: 'gemma2',   label: 'Gemma2'   },
+        { key: 'deepseek', label: 'DeepSeek' },
+      ];
+
+      const barData = modelList.map(m => ({
+        name: m.label,
+        'Unified':           UNIFIED[m.key],
+        'Split: Gap-Fill':   GSPLIT[m.key].gapfill,
+        'Split: Error Corr.':GSPLIT[m.key].errorcorr,
+        'Split: Transform.': GSPLIT[m.key].transform,
+      }));
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-100 mb-1">Grammar Split: Einheitlicher Prompt vs. aufgeteilte Subtypen</h2>
+          </div>
+
+          {/* Explanation */}
+          <Card className="bg-gray-850">
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Der einheitliche Grammar-Prompt ließ die Modelle alle drei Typen (<span className="text-yellow-300">Gap-Fill</span>,{' '}
+              <span className="text-pink-300">Error Correction</span>,{' '}
+              <span className="text-violet-300">Sentence Transformation</span>) in einem Prompt generieren.
+              Beim Split wurden diese als <strong className="text-gray-100">separate Prompts</strong> gestellt.
+            </p>
+          </Card>
+
+          {/* Comparison bar chart */}
+          <Card>
+            <SectionTitle>Direktvergleich: Unified vs. Split-Subtypen (Punkte von 40)</SectionTitle>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={barData} margin={{ top: 5, right: 10, left: -10, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                <YAxis domain={[0, 40]} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="Unified"            fill="#94a3b8" radius={[2,2,0,0]} />
+                <Bar dataKey="Split: Gap-Fill"    fill="#fbbf24" radius={[2,2,0,0]} />
+                <Bar dataKey="Split: Error Corr." fill="#f472b6" radius={[2,2,0,0]} />
+                <Bar dataKey="Split: Transform."  fill="#a78bfa" radius={[2,2,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+
+          {/* Result table */}
+          <Card>
+            <SectionTitle>Ergebnis-Tabelle</SectionTitle>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-2 pr-4 text-gray-400 font-semibold">Modell</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-semibold">Unified (/40)</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-semibold">GF (/40)</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-semibold">EC (/40)</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-semibold">Transf. (/40)</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-semibold">Split-Ø</th>
+                    <th className="text-center py-2 px-3 text-gray-400 font-semibold">Δ (vs Unified)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modelList.map(m => {
+                    const u = UNIFIED[m.key];
+                    const gs = GSPLIT[m.key];
+                    const splitAvg = Math.round((gs.gapfill + gs.errorcorr + gs.transform) / 3 * 10) / 10;
+                    const delta = Math.round((splitAvg - u) * 10) / 10;
+                    return (
+                      <tr key={m.key} className="border-b border-gray-800">
+                        <td className="py-3 pr-4 font-semibold" style={{ color: COLORS[m.key] }}>{m.label}</td>
+                        <td className="text-center py-3 px-3 text-gray-200 font-semibold">{u}</td>
+                        <td className="text-center py-3 px-3 text-yellow-300">{gs.gapfill}</td>
+                        <td className="text-center py-3 px-3 text-pink-300">{gs.errorcorr}</td>
+                        <td className="text-center py-3 px-3 text-violet-300">{gs.transform}</td>
+                        <td className="text-center py-3 px-3 text-gray-200">{splitAvg}</td>
+                        <td className="text-center py-3 px-3"><DeltaBadge val={delta} /></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Key finding */}
+          <Card className="border-orange-800 bg-orange-950">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠</span>
+              <div>
+                <p className="text-orange-200 font-bold text-base mb-1">Key Finding</p>
+                <p className="text-orange-300 text-sm">
+                  Das Splitting hat sich nicht gelohnt — alle Modelle schneiden im Split schlechter ab als im einheitlichen Format.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      );
+    };
+
+    // ─── MODEL CATEGORY CHART (per-model V2i/V2/V3 bars) ─────────────────────
+    const ModelCategoryChart = () => {
+      const [activeModel, setActiveModel] = React.useState('mistral');
+      const modelList = [
+        { key: 'mistral', label: 'Mistral' },
+        { key: 'gemma2',  label: 'Gemma2'  },
+        { key: 'qwen',    label: 'Qwen3.5' },
+      ];
+
+      const data = CATS.map(cat => ({
+        name: cat.name.split(' ')[0],
+        'V2i (vor Feedback)': pct(V2I[activeModel]?.[cat.key], cat.max),
+        'V2 (Strukturcheck)': pct(V2[activeModel]?.[cat.key],  cat.max),
+        'V3 (Inhaltscheck)':  pct(V3[activeModel]?.[cat.key],  cat.max),
+      }));
+
+      return (
+        <div>
+          <div className="flex gap-2 mb-4">
+            {modelList.map(m => (
+              <button key={m.key} onClick={() => setActiveModel(m.key)}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                style={activeModel === m.key
+                  ? { background: COLORS[m.key], color: '#fff' }
+                  : { background: '#1f2937', color: '#9ca3af' }}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} />
+              <YAxis domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 11 }} unit="%" />
+              <Tooltip formatter={v => v != null ? `${v}%` : '—'}
+                contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="V2i (vor Feedback)" fill="#a78bfa" radius={[3,3,0,0]} />
+              <Bar dataKey="V2 (Strukturcheck)" fill="#22d3ee" radius={[3,3,0,0]} />
+              <Bar dataKey="V3 (Inhaltscheck)"  fill="#34d399" radius={[3,3,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    };
+
+    // ─── TAB 4: FEEDBACK LOOP ────────────────────────────────────────────────
+    const TabFeedbackLoop = () => {
+      const modelList = [
+        { key: 'mistral', label: 'Mistral' },
+        { key: 'gemma2',  label: 'Gemma2'  },
+        { key: 'qwen',    label: 'Qwen'    },
+      ];
+
+      // Compute per-model averages
+      const modelAvgDelta = (model) => {
+        const d12 = CATS.map(c => {
+          const a = V2I[model]?.[c.key];
+          const b = V2[model]?.[c.key];
+          return (a != null && b != null) ? b - a : null;
+        }).filter(v => v != null);
+        const d23 = CATS.map(c => {
+          const a = V2[model]?.[c.key];
+          const b = V3[model]?.[c.key];
+          return (a != null && b != null) ? b - a : null;
+        }).filter(v => v != null);
+        const avg12 = d12.length ? Math.round(d12.reduce((a,b)=>a+b,0)/d12.length * 10)/10 : null;
+        const avg23 = d23.length ? Math.round(d23.reduce((a,b)=>a+b,0)/d23.length * 10)/10 : null;
+        return { avg12, avg23 };
+      };
+
+      // Feedback effect bar chart data
+      const fbBarData = CATS.map(c => {
+        const entry = { name: c.name };
+        modelList.forEach(m => {
+          const v2i = V2I[m.key]?.[c.key];
+          const v2  = V2[m.key]?.[c.key];
+          const v3  = V3[m.key]?.[c.key];
+          entry[`${m.label} Δ Struktur`] = (v2i != null && v2 != null) ? v2 - v2i : null;
+          entry[`${m.label} Δ Inhalt`]   = (v2 != null && v3 != null)  ? v3 - v2  : null;
+        });
+        return entry;
+      });
+
+      const DELTA_COLORS = {
+        'Mistral Δ Struktur': '#f59e0b',
+        'Mistral Δ Inhalt':   '#fcd34d',
+        'Gemma2 Δ Struktur':  '#60a5fa',
+        'Gemma2 Δ Inhalt':    '#93c5fd',
+        'Qwen Δ Struktur':    '#a78bfa',
+        'Qwen Δ Inhalt':      '#c4b5fd',
+      };
+
+      const deltaKeys = Object.keys(DELTA_COLORS);
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-100 mb-1">Feedback Loop: V2 (Strukturcheck) + V3 (Inhaltscheck)</h2>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="text-center">
+              <p className="text-3xl font-black text-red-400">{FB_STATS.v2.failRate}%</p>
+              <p className="text-xs text-gray-400 mt-1">V2 FAIL-Rate</p>
+            </Card>
+            <Card className="text-center">
+              <p className="text-3xl font-black text-gray-100">{FB_STATS.v2.total}</p>
+              <p className="text-xs text-gray-400 mt-1">V2 Gesamt-Outputs</p>
+            </Card>
+            <Card className="text-center">
+              <p className="text-3xl font-black text-orange-400">{FB_STATS.v3.failRate}%</p>
+              <p className="text-xs text-gray-400 mt-1">V3 FAIL-Rate</p>
+            </Card>
+            <Card className="text-center">
+              <p className="text-3xl font-black text-yellow-400">{FB_STATS.v3.humanReview}</p>
+              <p className="text-xs text-gray-400 mt-1">Human Review nötig</p>
+            </Card>
+          </div>
+
+          {/* Model cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {modelList.map(m => {
+              const { avg12, avg23 } = modelAvgDelta(m.key);
+              return (
+                <Card key={m.key}>
+                  <div className="text-center mb-3">
+                    <span className="text-lg font-bold" style={{ color: COLORS[m.key] }}>{m.label}</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center bg-gray-750 rounded-lg p-3 bg-gray-900">
+                      <div>
+                        <p className="text-xs text-gray-400">Strukturcheck-Effekt</p>
+                        <p className="text-xs text-gray-500">V2i → V2 (Ø)</p>
+                      </div>
+                      <DeltaBadge val={avg12} />
+                    </div>
+                    <div className="flex justify-between items-center bg-gray-750 rounded-lg p-3 bg-gray-900">
+                      <div>
+                        <p className="text-xs text-gray-400">Inhaltscheck-Effekt</p>
+                        <p className="text-xs text-gray-500">V2 → V3 (Ø)</p>
+                      </div>
+                      <DeltaBadge val={avg23} />
+                    </div>
+                  </div>
+                  {/* Mini table V2i → V2 → V3 */}
+                  <div className="mt-3">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-gray-500">
+                          <td className="pb-1">Kat.</td>
+                          <td className="text-center pb-1">V2i</td>
+                          <td className="text-center pb-1">V2</td>
+                          <td className="text-center pb-1">V3</td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {CATS.map(c => (
+                          <tr key={c.key} className="border-t border-gray-800">
+                            <td className="py-0.5 text-gray-400">{c.name.split(' ')[0]}</td>
+                            <td className="text-center py-0.5 text-gray-300">{V2I[m.key]?.[c.key] ?? '–'}</td>
+                            <td className="text-center py-0.5 text-gray-300">{V2[m.key]?.[c.key] ?? '–'}</td>
+                            <td className="text-center py-0.5 text-gray-300">{V3[m.key]?.[c.key] ?? '–'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Feedback effect bar chart */}
+          <Card>
+            <SectionTitle>Feedback-Effekt pro Kategorie (Δ Punkte)</SectionTitle>
+            <p className="text-xs text-gray-500 mb-4">Positive Werte = Verbesserung durch Feedback. Negative = Verschlechterung.</p>
+            <ResponsiveContainer width="100%" height={380}>
+              <BarChart data={fbBarData} margin={{ top: 5, right: 10, left: -10, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10 }} angle={-30} textAnchor="end" interval={0} />
+                <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <ReferenceLine y={0} stroke="#6b7280" strokeWidth={1.5} />
+                {deltaKeys.map(k => (
+                  <Bar key={k} dataKey={k} fill={DELTA_COLORS[k]} radius={[2,2,0,0]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+
+          {/* Scores nach Kategorie – per model */}
+          <Card>
+            <SectionTitle>Scores nach Kategorie</SectionTitle>
+            <p className="text-xs text-gray-500 mb-4">V2i (vor Feedback) → V2 (Strukturcheck) → V3 (Inhaltscheck) pro Modell und Kategorie.</p>
+            <ModelCategoryChart />
+          </Card>
+
+          {/* Key findings */}
+          <div className="space-y-3">
+            <h3 className="text-base font-bold text-gray-200">Key Findings</h3>
+            {[
+              { text: 'Strukturcheck (qwen2.5:3b) verschlechtert Mistral in 5/7 Kategorien', dot: '#ef4444', cardClass: 'border-red-800 bg-red-950' },
+              { text: 'Inhaltscheck (qwen2.5:7b) schadet Qwen3.5 deutlich (Vocab: 32→22)', dot: '#f97316', cardClass: 'border-orange-800 bg-orange-950' },
+              { text: 'Gemma2 profitiert am meisten vom Strukturcheck (+4 Grammar, +2 Gap-Fill)', dot: '#22c55e', cardClass: 'border-green-800 bg-green-950' },
+            ].map((f, i) => (
+              <Card key={i} className={f.cardClass}>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: f.dot }} />
+                  <p className="text-sm text-gray-200">{f.text}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    // ─── MAIN APP ─────────────────────────────────────────────────────────────
+    const App = () => {
+      const [activeTab, setActiveTab] = React.useState(0);
+
+      const tabs = [
+        { label: 'Gesamtübersicht',  component: TabGesamtuebersicht },
+        { label: 'Original Run',     component: TabOriginalRun      },
+        { label: 'Grammar Split',    component: TabGrammarSplit     },
+        { label: 'Feedback Loop',    component: TabFeedbackLoop     },
+      ];
+
+      const ActiveComponent = tabs[activeTab].component;
+
+      return (
+        <div className="min-h-screen bg-gray-950 text-gray-100">
+          {/* Header */}
+          <div className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+            <div className="max-w-7xl mx-auto">
+              <h1 className="text-2xl font-black text-white tracking-tight">
+                Helikon
+                <span className="text-indigo-400 ml-2 font-light">Master Dashboard</span>
+              </h1>
+              <p className="text-gray-400 text-sm mt-0.5">
+                LLM-Evaluation für CLIL-Übungsgenerierung – Diplomarbeit – GPT-5.4 Bewertung
+              </p>
+            </div>
+          </div>
+
+          {/* Tab Nav */}
+          <div className="bg-gray-900 border-b border-gray-800 px-6">
+            <div className="max-w-7xl mx-auto flex gap-1">
+              {tabs.map((t, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveTab(i)}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === i
+                      ? 'border-indigo-500 text-indigo-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="max-w-7xl mx-auto px-6 py-8">
+            <ActiveComponent />
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-gray-800 mt-12 px-6 py-5 text-center">
+            <p className="text-gray-600 text-xs">
+              Diplomarbeit Helikon – Gesamtauswertung – GPT-5.4 Evaluation
+            </p>
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
