@@ -33,44 +33,45 @@ const CATEGORIES = [
 const MODELS = ['mistral:latest', 'gemma2:9b', 'qwen3.5:9b'];
 const MODEL_LABELS = { 'mistral:latest': 'Mistral', 'gemma2:9b': 'Gemma2', 'qwen3.5:9b': 'Qwen3.5' };
 
-// Scores: orig = languages branch (V1-V3, Prompts 1-3), v2 = post-structural, v3 = post-content
+// Scores: orig = languages branch (V1-V3, Prompts 1-3), v2i = V2 BEFORE feedback,
+// v2 = post-structural feedback, v3 = post-content feedback
 // Orig uses deepseek-r1:8b as 3rd model; V2/V3 use qwen3.5:9b → orig for qwen = null
-// All scores evaluated with GPT-5.4 (avg of 2 runs for orig, 1 run for v2/v3)
+// All scores evaluated with GPT-5.4
 const SCORES = {
   'teil2': {
-    'mistral:latest': { orig: 29.5, v2: 25.0, v3: 24.0, max: 40 },
-    'gemma2:9b':      { orig: 35.9, v2: 32.0, v3: 34.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 32.0, v3: 22.0, max: 40 },
+    'mistral:latest': { orig: 29.5, v2i: 29.0, v2: 25.0, v3: 24.0, max: 40 },
+    'gemma2:9b':      { orig: 35.9, v2i: 33.0, v2: 32.0, v3: 34.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2i: 25.0, v2: 32.0, v3: 22.0, max: 40 },
   },
   'teil3': {
-    'mistral:latest': { orig: 29.0, v2: 27.0, v3: 28.0, max: 45 },
-    'gemma2:9b':      { orig: 35.0, v2: 32.0, v3: 34.0, max: 45 },
-    'qwen3.5:9b':     { orig: null, v2: 30.0, v3: 30.0, max: 45 },
+    'mistral:latest': { orig: 29.0, v2i: 29.0, v2: 27.0, v3: 28.0, max: 45 },
+    'gemma2:9b':      { orig: 35.0, v2i: 35.0, v2: 32.0, v3: 34.0, max: 45 },
+    'qwen3.5:9b':     { orig: null, v2i: 34.0, v2: 30.0, v3: 30.0, max: 45 },
   },
   'teil4': {
-    'mistral:latest': { orig: 21.3, v2: 22.0, v3: 23.0, max: 40 },
-    'gemma2:9b':      { orig: 28.7, v2: 36.0, v3: 31.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 31.0, v3: 29.0, max: 40 },
+    'mistral:latest': { orig: 21.3, v2i: 25.0, v2: 22.0, v3: 23.0, max: 40 },
+    'gemma2:9b':      { orig: 28.7, v2i: 35.0, v2: 36.0, v3: 31.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2i: 29.0, v2: 31.0, v3: 29.0, max: 40 },
   },
   'teil5': {
-    'mistral:latest': { orig: 18.4, v2: 18.0, v3: 21.0, max: 40 },
-    'gemma2:9b':      { orig: 30.3, v2: 27.0, v3: 24.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 19.0, v3: 15.0, max: 40 },
+    'mistral:latest': { orig: 18.4, v2i: 19.0, v2: 18.0, v3: 21.0, max: 40 },
+    'gemma2:9b':      { orig: 30.3, v2i: 23.0, v2: 27.0, v3: 24.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2i: 19.0, v2: 19.0, v3: 15.0, max: 40 },
   },
   'teil6': {
-    'mistral:latest': { orig: 28.6, v2: 25.0, v3: 26.0, max: 40 },
-    'gemma2:9b':      { orig: 36.0, v2: 37.0, v3: 36.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 35.0, v3: 35.0, max: 40 },
+    'mistral:latest': { orig: 28.6, v2i: 31.0, v2: 25.0, v3: 26.0, max: 40 },
+    'gemma2:9b':      { orig: 36.0, v2i: 36.0, v2: 37.0, v3: 36.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2i: 31.0, v2: 35.0, v3: 35.0, max: 40 },
   },
   'teil7': {
-    'mistral:latest': { orig: 23.4, v2: 21.0, v3: 24.0, max: 40 },
-    'gemma2:9b':      { orig: 25.3, v2: 31.0, v3: 26.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 23.0, v3: 24.0, max: 40 },
+    'mistral:latest': { orig: 23.4, v2i: 25.0, v2: 21.0, v3: 24.0, max: 40 },
+    'gemma2:9b':      { orig: 25.3, v2i: 29.0, v2: 31.0, v3: 26.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2i: 22.0, v2: 23.0, v3: 24.0, max: 40 },
   },
   'teil8': {
-    'mistral:latest': { orig: 14.0, v2: 12.0, v3: 12.0, max: 40 },
-    'gemma2:9b':      { orig: 20.5, v2: 16.0, v3: 17.0, max: 40 },
-    'qwen3.5:9b':     { orig: null, v2: 15.0, v3: 12.0, max: 40 },
+    'mistral:latest': { orig: 14.0, v2i: 14.0, v2: 12.0, v3: 12.0, max: 40 },
+    'gemma2:9b':      { orig: 20.5, v2i: 18.0, v2: 16.0, v3: 17.0, max: 40 },
+    'qwen3.5:9b':     { orig: null, v2i: 17.0, v2: 15.0, v3: 12.0, max: 40 },
   },
 };
 
@@ -107,11 +108,11 @@ function OverviewChart({ model }) {
   const data = CATEGORIES.map(cat => {
     const s = SCORES[cat.key][model];
     return {
-      name: cat.name.replace(' ', '\n'),
       shortName: cat.name.split(' ')[0],
-      Orig:  s.orig != null ? pct(s.orig, cat.max) : null,
-      'V2 (Struktur)': pct(s.v2, cat.max),
-      'V3 (Inhalt)':   pct(s.v3, cat.max),
+      Orig:            s.orig != null ? pct(s.orig, cat.max) : null,
+      'V2 (vor Feedback)': pct(s.v2i, cat.max),
+      'V2 (Strukturcheck)': pct(s.v2, cat.max),
+      'V3 (Inhaltscheck)':  pct(s.v3, cat.max),
     };
   });
 
@@ -124,8 +125,9 @@ function OverviewChart({ model }) {
         <Tooltip formatter={(v) => v != null ? `${v}%` : '—'} contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         <Bar dataKey="Orig" fill={COLORS.orig} radius={[3,3,0,0]} />
-        <Bar dataKey="V2 (Struktur)" fill={COLORS.v2} radius={[3,3,0,0]} />
-        <Bar dataKey="V3 (Inhalt)" fill={COLORS.v3} radius={[3,3,0,0]} />
+        <Bar dataKey="V2 (vor Feedback)" fill="#a78bfa" radius={[3,3,0,0]} />
+        <Bar dataKey="V2 (Strukturcheck)" fill={COLORS.v2} radius={[3,3,0,0]} />
+        <Bar dataKey="V3 (Inhaltscheck)" fill={COLORS.v3} radius={[3,3,0,0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -169,19 +171,18 @@ function ScoreTable() {
             <th className="text-left py-2 pr-4">Kategorie</th>
             <th className="text-left py-2 pr-4">Modell</th>
             <th className="text-center py-2 px-2">Orig</th>
-            <th className="text-center py-2 px-2">V2</th>
-            <th className="text-center py-2 px-2">Δ Orig→V2</th>
-            <th className="text-center py-2 px-2">V3</th>
+            <th className="text-center py-2 px-2 text-purple-400">V2 vor FB</th>
+            <th className="text-center py-2 px-2">V2 nach Struktur</th>
+            <th className="text-center py-2 px-2">Δ FB-Effekt</th>
+            <th className="text-center py-2 px-2">V3 nach Inhalt</th>
             <th className="text-center py-2 px-2">Δ V2→V3</th>
-            <th className="text-center py-2 px-2">Δ Gesamt</th>
           </tr>
         </thead>
         <tbody>
           {CATEGORIES.map(cat => MODELS.map((model, mi) => {
             const s = SCORES[cat.key][model];
-            const d12 = delta(s.orig, s.v2);
+            const dfb = delta(s.v2i, s.v2);
             const d23 = delta(s.v2, s.v3);
-            const dtot = delta(s.orig, s.v3);
             return (
               <tr key={`${cat.key}-${model}`} className={`border-b border-gray-800 ${mi === 0 ? 'border-t border-gray-600' : ''}`}>
                 {mi === 0 && <td rowSpan={3} className="py-2 pr-4 font-semibold text-gray-200 align-middle">{cat.name}</td>}
@@ -191,11 +192,11 @@ function ScoreTable() {
                   </span>
                 </td>
                 <td className="text-center py-1.5 px-2 text-gray-400">{s.orig != null ? `${s.orig}/${cat.max}` : '—'}</td>
+                <td className="text-center py-1.5 px-2 font-mono text-purple-300">{s.v2i != null ? `${s.v2i}/${cat.max}` : '—'}</td>
                 <td className="text-center py-1.5 px-2 font-mono">{s.v2 != null ? `${s.v2}/${cat.max}` : '—'}</td>
-                <td className="text-center py-1.5 px-2"><DeltaBadge value={d12} /></td>
+                <td className="text-center py-1.5 px-2"><DeltaBadge value={dfb} /></td>
                 <td className="text-center py-1.5 px-2 font-mono">{s.v3 != null ? `${s.v3}/${cat.max}` : '—'}</td>
                 <td className="text-center py-1.5 px-2"><DeltaBadge value={d23} /></td>
-                <td className="text-center py-1.5 px-2"><DeltaBadge value={dtot} /></td>
               </tr>
             );
           }))}
@@ -242,28 +243,71 @@ function ImprovementChart() {
   );
 }
 
+// ── FEEDBACK EFFECT CHART (v2i → v2 → v3) ────────────────────────────────────
+function ROIChart() {
+  const data = CATEGORIES.map(cat => {
+    const entry = { name: cat.name.split(' ')[0] };
+    MODELS.forEach(m => {
+      const s = SCORES[cat.key][m];
+      entry[MODEL_LABELS[m] + ' Strukturcheck'] = delta(s.v2i, s.v2);
+      entry[MODEL_LABELS[m] + ' Inhaltscheck'] = delta(s.v2, s.v3);
+    });
+    return entry;
+  });
+
+  const barKeys = [];
+  MODELS.forEach(m => {
+    barKeys.push({ key: MODEL_LABELS[m] + ' Strukturcheck', color: COLORS[m], opacity: 1.0 });
+    barKeys.push({ key: MODEL_LABELS[m] + ' Inhaltscheck',  color: COLORS[m], opacity: 0.4 });
+  });
+
+  return (
+    <ResponsiveContainer width="100%" height={320}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+        <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} />
+        <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} unit="Pkt" />
+        <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8 }}
+          formatter={(v) => v != null ? `${v > 0 ? '+' : ''}${v} Pkte` : '—'} />
+        <Legend wrapperStyle={{ fontSize: 11 }} />
+        {barKeys.map(b => (
+          <Bar key={b.key} dataKey={b.key} fill={b.color} fillOpacity={b.opacity} radius={[3,3,0,0]} />
+        ))}
+        <Recharts.ReferenceLine y={0} stroke="#6b7280" strokeWidth={1.5} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 // ── MODEL AVERAGE CARDS ───────────────────────────────────────────────────────
 function ModelAverages() {
   return (
     <div className="grid grid-cols-3 gap-4">
       {MODELS.map(model => {
         const cats = CATEGORIES.filter(c => SCORES[c.key][model].v2 != null);
-        const avgV2 = cats.reduce((s, c) => s + pct(SCORES[c.key][model].v2, c.max), 0) / cats.length;
-        const avgV3 = cats.reduce((s, c) => s + pct(SCORES[c.key][model].v3, c.max), 0) / cats.length;
+        const avgV2i = cats.reduce((s, c) => s + pct(SCORES[c.key][model].v2i, c.max), 0) / cats.length;
+        const avgV2  = cats.reduce((s, c) => s + pct(SCORES[c.key][model].v2,  c.max), 0) / cats.length;
+        const avgV3  = cats.reduce((s, c) => s + pct(SCORES[c.key][model].v3,  c.max), 0) / cats.length;
         const catsOrig = cats.filter(c => SCORES[c.key][model].orig != null);
         const avgOrig = catsOrig.length > 0 ? catsOrig.reduce((s, c) => s + pct(SCORES[c.key][model].orig, c.max), 0) / catsOrig.length : null;
-        const diff = Math.round((avgV3 - avgV2) * 10) / 10;
+        const diffStruct = Math.round((avgV2 - avgV2i) * 10) / 10;
+        const diffContent = Math.round((avgV3 - avgV2) * 10) / 10;
 
         return (
           <div key={model} className="rounded-xl bg-gray-800 border border-gray-700 p-4">
             <div className="font-bold text-lg mb-3" style={{ color: COLORS[model] }}>{MODEL_LABELS[model]}</div>
             <div className="space-y-2 text-sm">
               {avgOrig != null && <div className="flex justify-between"><span className="text-gray-400">Orig (Ø)</span><span style={{ color: COLORS.orig }}>{avgOrig.toFixed(1)}%</span></div>}
-              <div className="flex justify-between"><span className="text-gray-400">V2 Strukturcheck (Ø)</span><span style={{ color: COLORS.v2 }}>{avgV2.toFixed(1)}%</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">V3 Inhaltscheck (Ø)</span><span style={{ color: COLORS.v3 }}>{avgV3.toFixed(1)}%</span></div>
-              <div className="flex justify-between border-t border-gray-600 pt-2">
-                <span className="text-gray-400">Δ V2→V3</span>
-                <DeltaBadge value={diff} />
+              <div className="flex justify-between"><span className="text-purple-400">V2 vor Feedback (Ø)</span><span className="text-purple-300">{avgV2i.toFixed(1)}%</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">V2 nach Strukturcheck (Ø)</span><span style={{ color: COLORS.v2 }}>{avgV2.toFixed(1)}%</span></div>
+              <div className="flex justify-between border-t border-gray-700 pt-1">
+                <span className="text-gray-500 text-xs">Δ Strukturcheck</span>
+                <DeltaBadge value={diffStruct} />
+              </div>
+              <div className="flex justify-between"><span className="text-gray-400">V3 nach Inhaltscheck (Ø)</span><span style={{ color: COLORS.v3 }}>{avgV3.toFixed(1)}%</span></div>
+              <div className="flex justify-between border-t border-gray-600 pt-1">
+                <span className="text-gray-500 text-xs">Δ Inhaltscheck</span>
+                <DeltaBadge value={diffContent} />
               </div>
             </div>
           </div>
@@ -326,6 +370,18 @@ function App() {
         </div>
       </div>
 
+      {/* Feedback Effect Chart */}
+      <div>
+        <h2 className="text-xl font-semibold mb-2 text-gray-200">Hat sich der Feedback-Loop gelohnt?</h2>
+        <p className="text-gray-400 text-sm mb-4">
+          Δ durch Strukturcheck (dunkle Balken) = V2-vor-Feedback → V2-nach-Feedback. Δ durch Inhaltscheck (helle Balken) = V2 → V3.
+          Positiv = Feedback hat geholfen, Negativ = Feedback hat geschadet.
+        </p>
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <ROIChart />
+        </div>
+      </div>
+
       {/* V2→V3 Delta Chart */}
       <div>
         <h2 className="text-xl font-semibold mb-2 text-gray-200">Δ V2 → V3: Verbesserung durch Inhaltscheck</h2>
@@ -364,10 +420,10 @@ function App() {
         <h2 className="text-xl font-semibold mb-4 text-gray-200">Key Findings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
-            { title: "Feedback-Loop kaum Verbesserung", text: "Mit GPT-5.4 als Evaluator zeigt sich: der Feedback-Loop verbessert die Scores kaum. Mistral und Gemma2 schneiden in V2/V3 meist gleich oder schlechter ab als im Orig-Run — trotz 96% Strukturcheck-FAIL und 79% Inhaltscheck-FAIL.", color: "border-cyan-700" },
-            { title: "Inhaltscheck: Mistral leicht besser, andere schlechter", text: "V3 (Inhaltscheck) hilft Mistral marginal (+3 Grammar, +3 Gap-Fill), schadet aber Gemma2 (SC: 36→31, Gap-Fill: 31→26) und Qwen3.5 deutlich (Vocab: 32→22, Grammar: 19→15). Der Content-Reviewer erzeugt möglicherweise fehlerhafte Korrekturen.", color: "border-emerald-700" },
-            { title: "Evaluator-Konsistenz: GPT-5.4 zuverlässiger", text: "Copilot (alter Evaluator) zeigte massive Schwankungen: SC Mistral 37↔17, Gemma2 26↔39 auf denselben Outputs. GPT-5.4 weicht zwischen zwei Runs nur um ±1-3 Punkte ab — deutlich reproduzierbarer.", color: "border-blue-700" },
-            { title: "Qwen3.5 enttäuscht bei späteren Prompts", text: "Qwen3.5:9b schneidet in V2/V3 (Prompts 4-5) schwächer ab als erwartet, besonders bei Grammar (19) und Orthography (15). Zusätzlich ist es mit Ø 133s/Output das langsamste Modell — schlechte Kosten-Nutzen-Relation im Feedback-Loop.", color: "border-yellow-700" },
+            { title: "Strukturcheck verschlechtert Mistral", text: "Bei Mistral sinken die Scores nach dem Strukturcheck in 5 von 7 Kategorien (z.B. T/F: 31→25, Vocab: 29→25, MC: 29→27). Der qwen2.5:3b Reviewer beanstandet 96% der Outputs — aber die erzwungenen Überarbeitungen sind oft schlechter als das Original.", color: "border-cyan-700" },
+            { title: "Inhaltscheck (V3) hilft kaum bis schadet", text: "V3 verbessert Mistral leicht in Grammar (+3) und Gap-Fill (+3), schadet aber Gemma2 (SC: 36→31, Gap-Fill: 31→26) und Qwen3.5 deutlich (Vocab: 32→22, Grammar: 19→15). Der Content-Reviewer erzeugt möglicherweise fehlerhafte Korrekturen.", color: "border-emerald-700" },
+            { title: "Evaluator-Konsistenz: GPT-5.4 zuverlässiger", text: "Copilot (alter Evaluator) zeigte massive Schwankungen: SC Mistral 37↔17, Gemma2 26↔39 auf denselben Outputs. GPT-5.4 weicht zwischen zwei Runs nur um ±1-3 Punkte ab — deutlich reproduzierbarer für wissenschaftliche Auswertung.", color: "border-blue-700" },
+            { title: "Gemma2 profitiert am meisten vom Strukturcheck", text: "Gemma2 ist das einzige Modell das vom Strukturcheck konsistent profitiert: SC +1, Grammar +4, T/F +1, Gap-Fill +2. Qwen3.5 profitiert bei T/F (+4) und SC (+2), verliert aber bei MC (-4). Insgesamt bleibt der Effekt marginal.", color: "border-yellow-700" },
           ].map(f => (
             <div key={f.title} className={`bg-gray-800 rounded-xl p-4 border ${f.color}`}>
               <div className="font-semibold text-white mb-2">{f.title}</div>
