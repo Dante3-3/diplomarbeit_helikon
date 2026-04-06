@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLIL Benchmark Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface2: #1a1e2a;
+    --surface3: #222736;
+    --border: #262d40;
+    --border-light: #313a52;
+    --text: #e8eaf2;
+    --text-secondary: #b0b5c8;
+    --text-muted: #6b7394;
+    --accent: #5b7cfa;
+    --accent-light: #7b99ff;
+    --accent-glow: rgba(91,124,250,0.15);
+    --orange: #f59e42;
+    --green: #34d399;
+    --green-dim: rgba(52,211,153,0.15);
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.15);
+    --purple: #a78bfa;
+    --cyan: #22d3ee;
+    --sidebar-w: 240px;
+    --topbar-h: 0px;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────────── */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: var(--sidebar-w); height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+  .sidebar-brand {
+    padding: 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-brand h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .sidebar-brand .sub {
+    font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;
+  }
+  .sidebar-nav { flex: 1; padding: 0.75rem 0; overflow-y: auto; }
+  .sidebar-nav .nav-group {
+    padding: 0.4rem 1.25rem 0.2rem;
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-muted);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.55rem 1.25rem; cursor: pointer;
+    color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active {
+    background: var(--accent-glow);
+    color: var(--accent-light);
+    border-left-color: var(--accent);
+    font-weight: 600;
+  }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active svg { opacity: 1; }
+
+  .sidebar-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem; color: var(--text-muted);
+  }
+
+  /* ── Main Content ────────────────────────────────────────── */
+  .main {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+    padding: 2rem 2.5rem;
+    transition: margin-left 0.3s ease;
+  }
+
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+  }
+  .page-header h1 {
+    font-size: 1.6rem; font-weight: 700;
+  }
+  .page-header .meta {
+    font-size: 0.8rem; color: var(--text-muted);
+    display: flex; gap: 1.5rem;
+  }
+  .page-header .meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+  /* ── Mobile hamburger ────────────────────────────────────── */
+  .hamburger {
+    display: none; position: fixed; top: 1rem; left: 1rem; z-index: 200;
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1px solid var(--border);
+    cursor: pointer; align-items: center; justify-content: center;
+  }
+  .hamburger svg { width: 20px; height: 20px; color: var(--text); }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+  @media (max-width: 860px) {
+    .hamburger { display: flex; }
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .overlay.open { display: block; }
+    .main { margin-left: 0; padding: 1.5rem 1rem; padding-top: 4rem; }
+  }
+
+  /* ── Tab content ─────────────────────────────────────────── */
+  .tab-content {
+    display: none;
+    animation: fadeIn 0.25s ease;
+  }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Stats Cards ─────────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.875rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+  .stat-card:hover::before { opacity: 1; }
+  .stat-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.5rem; }
+  .stat-value { font-size: 1.65rem; font-weight: 800; color: var(--text); }
+  .stat-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+  /* ── Charts ──────────────────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+  @media (max-width: 1100px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 860px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+  .card.span-2 { grid-column: span 2; }
+  @media (max-width: 860px) { .card.span-2 { grid-column: span 1; } }
+  .card-title {
+    font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .card-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .card canvas { max-height: 360px; }
+
+  /* ── Podium ──────────────────────────────────────────────── */
+  .podium-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .podium-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .podium-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .podium-card::after {
+    content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+  }
+  .podium-card.p1::after { background: linear-gradient(180deg, #ffd700, #f59e42); }
+  .podium-card.p2::after { background: linear-gradient(180deg, #c0c0c0, #8b92a8); }
+  .podium-card.p3::after { background: linear-gradient(180deg, #cd7f32, #a0522d); }
+  .podium-rank {
+    font-size: 2rem; font-weight: 900; min-width: 2.5rem; text-align: center;
+  }
+  .p1 .podium-rank { color: #ffd700; }
+  .p2 .podium-rank { color: #c0c0c0; }
+  .p3 .podium-rank { color: #cd7f32; }
+  .podium-info { flex: 1; }
+  .podium-name { font-weight: 700; font-size: 0.95rem; }
+  .podium-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+  .podium-score { font-size: 1.5rem; font-weight: 800; }
+
+  /* ── Radar toggles ───────────────────────────────────────── */
+  .toggle-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+  .toggle-btn {
+    padding: 0.45rem 0.9rem; border-radius: 99px;
+    border: 1.5px solid var(--border); background: transparent;
+    color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .toggle-btn:hover { border-color: var(--accent); color: var(--text); }
+  .toggle-btn.on {
+    background: var(--accent-glow); border-color: var(--accent);
+    color: var(--accent-light);
+  }
+
+  /* ── Head-to-Head ────────────────────────────────────────── */
+  .h2h-selectors {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap;
+  }
+  .h2h-selectors select {
+    padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-size: 0.9rem; font-family: inherit;
+    cursor: pointer; outline: none;
+  }
+  .h2h-selectors select:focus { border-color: var(--accent); }
+  .h2h-selectors .vs {
+    font-size: 1.2rem; font-weight: 900; color: var(--text-muted);
+  }
+
+  .h2h-metrics {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;
+  }
+  @media (max-width: 700px) { .h2h-metrics { grid-template-columns: 1fr; } }
+  .h2h-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem;
+  }
+  .h2h-panel h3 {
+    font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .h2h-panel .wins {
+    font-size: 2.8rem; font-weight: 900; line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .h2h-panel .wins-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+  .metric-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.45rem 0; border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-row .label { color: var(--text-secondary); }
+  .metric-row .val { font-weight: 700; }
+  .metric-row .val.win { color: var(--green); }
+  .metric-row .val.lose { color: var(--text-muted); }
+
+  /* ── Comparison bar ──────────────────────────────────────── */
+  .cmp-bar-wrap { margin-bottom: 1.5rem; }
+  .cmp-bar-label {
+    display: flex; justify-content: space-between; font-size: 0.8rem;
+    margin-bottom: 0.3rem; color: var(--text-secondary);
+  }
+  .cmp-bar {
+    display: flex; height: 24px; border-radius: 12px; overflow: hidden;
+    background: var(--surface2);
+  }
+  .cmp-bar div {
+    transition: width 0.5s ease;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: #fff;
+  }
+
+  /* ── Model Cards ─────────────────────────────────────────── */
+  .model-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem; margin-bottom: 2rem;
+  }
+  .mcard {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem;
+    transition: transform 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .mcard:hover { transform: translateY(-3px); }
+  .mcard::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .mcard-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem;
+  }
+  .mcard-name { font-size: 1rem; font-weight: 700; }
+  .mcard-score { font-size: 1.4rem; font-weight: 800; }
+  .mcard-row {
+    display: flex; justify-content: space-between; padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border); font-size: 0.85rem;
+  }
+  .mcard-row:last-child { border-bottom: none; }
+  .mcard-row .k { color: var(--text-muted); }
+  .mcard-row .v { font-weight: 600; }
+  .mcard canvas { margin-top: 1rem; max-height: 160px; }
+
+  /* ── Progress bar ────────────────────────────────────────── */
+  .pbar { height: 6px; border-radius: 3px; background: var(--surface3); margin-top: 0.3rem; overflow: hidden; }
+  .pbar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+  /* ── Heatmap ─────────────────────────────────────────────── */
+  .heatmap-container {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem;
+    overflow-x: auto; margin-bottom: 1.5rem;
+  }
+  .heatmap { display: grid; gap: 2px; font-size: 0.78rem; }
+  .hm-cell {
+    padding: 0.45rem 0.3rem; text-align: center; border-radius: 4px;
+    font-weight: 600; transition: transform 0.1s, box-shadow 0.1s;
+    cursor: default;
+  }
+  .hm-cell:hover { transform: scale(1.12); box-shadow: 0 0 12px rgba(0,0,0,0.4); z-index: 1; }
+  .hm-hdr {
+    background: var(--surface2); color: var(--text-muted); font-weight: 600;
+    padding: 0.45rem 0.3rem; text-align: center; border-radius: 4px; font-size: 0.7rem;
+  }
+
+  /* ── Filters ─────────────────────────────────────────────── */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.25rem;
+    align-items: center;
+  }
+  .filter-bar label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .filter-bar select {
+    padding: 0.4rem 0.65rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-size: 0.82rem; font-family: inherit;
+    cursor: pointer; outline: none; transition: border-color 0.2s;
+  }
+  .filter-bar select:focus { border-color: var(--accent); }
+  .filter-bar input[type="text"] {
+    padding: 0.4rem 0.65rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); font-size: 0.82rem; font-family: inherit;
+    outline: none; width: 180px; transition: border-color 0.2s;
+  }
+  .filter-bar input:focus { border-color: var(--accent); }
+
+  /* ── Table ───────────────────────────────────────────────── */
+  .table-info { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+  .table-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .table-scroll { overflow: auto; max-height: 560px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th {
+    background: var(--surface2); padding: 0.65rem 0.85rem; text-align: left;
+    font-weight: 600; color: var(--text-muted); font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    cursor: pointer; user-select: none; white-space: nowrap;
+    position: sticky; top: 0; z-index: 1;
+    transition: color 0.15s;
+  }
+  th:hover { color: var(--text); }
+  th.sorted { color: var(--accent-light); }
+  th .arr { margin-left: 3px; opacity: 0.3; font-size: 0.65rem; }
+  th.sorted .arr { opacity: 1; }
+  td { padding: 0.55rem 0.85rem; border-top: 1px solid var(--border); white-space: nowrap; }
+  tr:hover td { background: rgba(91,124,250,0.04); }
+  td.reason {
+    white-space: normal; max-width: 300px; font-size: 0.78rem;
+    color: var(--text-secondary); line-height: 1.4;
+  }
+  .badge {
+    display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px;
+    font-weight: 700; font-size: 0.8rem;
+  }
+  .b1 { background: var(--red-dim); color: var(--red); }
+  .b2 { background: rgba(248,113,113,0.1); color: #fb9898; }
+  .b3 { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .b4 { background: rgba(52,211,153,0.1); color: #6ee7b7; }
+  .b5 { background: var(--green-dim); color: var(--green); }
+
+  /* ── Donut grid ──────────────────────────────────────────── */
+  .donut-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem; margin-bottom: 1.5rem;
+  }
+  .donut-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem; text-align: center;
+  }
+  .donut-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .donut-card canvas { max-height: 180px; }
+
+  /* ── Section title ───────────────────────────────────────── */
+  .sec-title {
+    font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+  }
+  .sec-title .accent-line {
+    width: 4px; height: 20px; border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--cyan));
+  }
+</style>
+</head>
+<body>
+
+<!-- Hamburger for mobile -->
+<button class="hamburger" onclick="toggleSidebar()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- ══ Sidebar ════════════════════════════════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <h2>CLIL Benchmark</h2>
+    <div class="sub">{{GENERATED}}</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-group">Analysis</div>
+    <div class="nav-item active" onclick="nav('overview',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </div>
+    <div class="nav-item" onclick="nav('radar',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8.5" x2="22" y2="8.5"/></svg>
+      Skill Radar
+    </div>
+    <div class="nav-item" onclick="nav('h2h',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M8 3H3v5M16 21h5v-5M8 21H3v-5"/></svg>
+      Head-to-Head
+    </div>
+    <div class="nav-group">Details</div>
+    <div class="nav-item" onclick="nav('models',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg>
+      Model Cards
+    </div>
+    <div class="nav-item" onclick="nav('heatmap',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      Heatmap
+    </div>
+    <div class="nav-item" onclick="nav('charts',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Charts
+    </div>
+    <div class="nav-item" onclick="nav('table',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      All Results
+    </div>
+  </div>
+  <div class="sidebar-footer">{{FOOTER}}</div>
+</nav>
+
+<!-- ══ Main Content ═══════════════════════════════════════════ -->
+<div class="main">
+  <div class="page-header">
+    <h1 id="pageTitle">Overview</h1>
+    <div class="meta">
+      <span>{{RUNS}} runs</span>
+      <span>{{NMODELS}} models</span>
+      <span>{{NSECTIONS}} exercises</span>
+    </div>
+  </div>
+
+  <!-- ── Overview ───────────────────────────────────────────── -->
+  <div id="overview" class="tab-content active">
+    <div class="stats-row" id="statsRow"></div>
+    <div class="podium-grid" id="podium"></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--accent)"></div>Avg Score by Workflow</div><canvas id="cScoreWf"></canvas></div>
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--orange)"></div>Avg Time by Workflow</div><canvas id="cTimeWf"></canvas></div>
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--green)"></div>Tokens/sec</div><canvas id="cTps"></canvas></div>
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--purple)"></div>Score by Cognitive Level</div><canvas id="cLevel"></canvas></div>
+    </div>
+    <div class="sec-title"><div class="accent-line"></div>Score Distribution</div>
+    <div class="donut-row" id="donutRow"></div>
+    <div class="grid-2">
+      <div class="card span-2"><div class="card-title"><div class="dot" style="background:var(--cyan)"></div>Workflow Advantage (Direct-DE vs Translated)</div><canvas id="cWfAdv"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Skill Radar ────────────────────────────────────────── -->
+  <div id="radar" class="tab-content">
+    <div class="sec-title"><div class="accent-line"></div>Toggle Models</div>
+    <div class="toggle-row" id="radarToggles"></div>
+    <div class="grid-2">
+      <div class="card span-2"><div class="card-title"><div class="dot" style="background:var(--accent)"></div>Exercise Type Skills</div><canvas id="rSections"></canvas></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--purple)"></div>Overall Attributes</div><canvas id="rOverall"></canvas></div>
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--green)"></div>Material Proficiency</div><canvas id="rMaterials"></canvas></div>
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--orange)"></div>Workflow Comparison</div><canvas id="rWorkflow"></canvas></div>
+      <div class="card"><div class="card-title"><div class="dot" style="background:var(--cyan)"></div>Cognitive Level Detail</div><canvas id="rLevels"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Head-to-Head ───────────────────────────────────────── -->
+  <div id="h2h" class="tab-content">
+    <div class="h2h-selectors">
+      <select id="h2hA" onchange="buildH2H()">{{MODEL_OPTIONS}}</select>
+      <span class="vs">VS</span>
+      <select id="h2hB" onchange="buildH2H()">{{MODEL_OPTIONS}}</select>
+    </div>
+    <div class="grid-2">
+      <div class="card span-2"><canvas id="h2hRadar"></canvas></div>
+    </div>
+    <div id="h2hBars"></div>
+    <div class="h2h-metrics" id="h2hPanels"></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Score by Section</div><canvas id="h2hSec"></canvas></div>
+      <div class="card"><div class="card-title">Speed by Section</div><canvas id="h2hSpd"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Model Cards ────────────────────────────────────────── -->
+  <div id="models" class="tab-content">
+    <div class="model-grid" id="modelGrid"></div>
+  </div>
+
+  <!-- ── Heatmap ────────────────────────────────────────────── -->
+  <div id="heatmap" class="tab-content">
+    <div class="filter-bar">
+      <label>Workflow</label><select id="hmWf" onchange="buildHeatmap()"><option value="">All</option>{{WF_OPTIONS}}</select>
+      <label>Level</label><select id="hmLvl" onchange="buildHeatmap()"><option value="">All</option>{{LVL_OPTIONS}}</select>
+    </div>
+    <div class="heatmap-container">
+      <div class="heatmap" id="hmGrid"></div>
+    </div>
+  </div>
+
+  <!-- ── Charts ─────────────────────────────────────────────── -->
+  <div id="charts" class="tab-content">
+    <div class="grid-2">
+      <div class="card span-2"><div class="card-title">Score Histogram</div><canvas id="cHist"></canvas></div>
+      <div class="card"><div class="card-title">Score by Material</div><canvas id="cMat"></canvas></div>
+      <div class="card"><div class="card-title">Score by Section</div><canvas id="cSec"></canvas></div>
+      <div class="card span-2"><div class="card-title">Time vs Score</div><canvas id="cScatter"></canvas></div>
+      <div class="card"><div class="card-title">Score Trend by Material</div><canvas id="cTrend"></canvas></div>
+      <div class="card"><div class="card-title">Gen vs Trans Time (stacked)</div><canvas id="cStacked"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── All Results ────────────────────────────────────────── -->
+  <div id="table" class="tab-content">
+    <div class="filter-bar">
+      <label>Model</label><select id="fModel" onchange="filterTable()"><option value="">All</option>{{MODEL_OPTIONS}}</select>
+      <label>Material</label><select id="fMat" onchange="filterTable()"><option value="">All</option>{{MAT_OPTIONS}}</select>
+      <label>Level</label><select id="fLvl" onchange="filterTable()"><option value="">All</option>{{LVL_OPTIONS}}</select>
+      <label>Section</label><select id="fSec" onchange="filterTable()"><option value="">All</option>{{SEC_OPTIONS}}</select>
+      <label>Workflow</label><select id="fWf" onchange="filterTable()"><option value="">All</option>{{WF_OPTIONS}}</select>
+      <label>Min Score</label><select id="fMinS" onchange="filterTable()"><option value="0">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5</option></select>
+      <label>Search</label><input type="text" id="fSearch" placeholder="Search reasoning..." oninput="filterTable()">
+    </div>
+    <div class="table-info" id="tInfo"></div>
+    <div class="table-card"><div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th onclick="srt(0)">Model<span class="arr">&#9650;</span></th>
+          <th onclick="srt(1)">Material<span class="arr">&#9650;</span></th>
+          <th onclick="srt(2)">Section<span class="arr">&#9650;</span></th>
+          <th onclick="srt(3)">Level<span class="arr">&#9650;</span></th>
+          <th onclick="srt(4)">Workflow<span class="arr">&#9650;</span></th>
+          <th onclick="srt(5)">Gen(s)<span class="arr">&#9650;</span></th>
+          <th onclick="srt(6)">Trans(s)<span class="arr">&#9650;</span></th>
+          <th onclick="srt(7)">Total(s)<span class="arr">&#9650;</span></th>
+          <th onclick="srt(8)">t/s<span class="arr">&#9650;</span></th>
+          <th onclick="srt(9)">Score<span class="arr">&#9650;</span></th>
+          <th>Reasoning</th>
+        </tr></thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<script>
+const D={{DATA}},M={{MODELS}},WF={{WORKFLOWS}},LV={{LEVELS}},MAT={{MATERIALS}},SEC={{SECTIONS}};
+const MC=['#5b7cfa','#f59e42','#34d399','#f87171','#a78bfa','#22d3ee','#fbbf24','#fb7185'];
+const MCA=MC.map(c=>c+'28');
+const TITLES={overview:'Overview',radar:'Skill Radar',h2h:'Head-to-Head',models:'Model Cards',heatmap:'Heatmap',charts:'Charts',table:'All Results'};
+
+// Helpers
+const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:0;
+const sd=a=>{if(a.length<2)return 0;const m=avg(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1));};
+const norm=(v,mn,mx)=>mx===mn?.5:(v-mn)/(mx-mn);
+const sc=s=>s>=4.5?'var(--green)':s>=3.5?'#6ee7b7':s>=2.5?'var(--yellow)':'var(--red)';
+const hc=s=>{if(!s)return'var(--surface2)';const c=['','rgba(248,113,113,0.3)','rgba(248,113,113,0.15)','rgba(251,191,36,0.2)','rgba(52,211,153,0.15)','rgba(52,211,153,0.35)'];return c[Math.round(s)]||'var(--surface2)';};
+
+Chart.defaults.color='#6b7394';Chart.defaults.borderColor='#262d40';
+Chart.defaults.font.family="'Inter',system-ui,sans-serif";
+Chart.defaults.animation={duration:500,easing:'easeOutQuart'};
+Chart.defaults.plugins.tooltip={backgroundColor:'#1a1e2a',borderColor:'#313a52',borderWidth:1,titleFont:{weight:'600'},bodyFont:{size:12},padding:10,cornerRadius:8};
+
+// Navigation
+function nav(id,el){
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('pageTitle').textContent=TITLES[id]||id;
+  if(window.innerWidth<=860)toggleSidebar();
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+// Stats
+(function(){
+  const el=document.getElementById('statsRow');
+  const as=avg(D.map(r=>r.score)),at=avg(D.map(r=>r.total_time)),ap=avg(D.map(r=>r.tps));
+  const bm=M.reduce((b,m)=>{const s=avg(D.filter(r=>r.model===m).map(r=>r.score));return s>b.s?{m,s}:b;},{m:'',s:0});
+  const fm=M.reduce((b,m)=>{const s=avg(D.filter(r=>r.model===m).map(r=>r.tps));return s>b.s?{m,s}:b;},{m:'',s:0});
+  const stats=[
+    {v:D.length,l:'Total Runs',s:'across all models'},
+    {v:M.length,l:'Models',s:'tested'},
+    {v:SEC.length,l:'Exercise Types',s:'evaluated'},
+    {v:as.toFixed(2)+'/5',l:'Avg Score',s:as>=3.5?'Good':'Needs improvement'},
+    {v:at.toFixed(1)+'s',l:'Avg Time',s:'per generation'},
+    {v:ap.toFixed(1),l:'Avg Tokens/sec',s:'throughput'},
+    {v:bm.m,l:'Best Quality',s:bm.s.toFixed(2)+'/5'},
+    {v:fm.m,l:'Fastest',s:fm.s.toFixed(1)+' t/s'},
+  ];
+  el.innerHTML=stats.map(s=>`<div class="stat-card"><div class="stat-label">${s.l}</div><div class="stat-value">${s.v}</div><div class="stat-sub">${s.s}</div></div>`).join('');
+})();
+
+// Podium
+(function(){
+  const ranked=M.map(m=>({m,s:avg(D.filter(r=>r.model===m).map(r=>r.score)),t:avg(D.filter(r=>r.model===m).map(r=>r.tps)),tm:avg(D.filter(r=>r.model===m).map(r=>r.total_time)),n:D.filter(r=>r.model===m).length})).sort((a,b)=>b.s-a.s);
+  const cls=['p1','p2','p3'];
+  document.getElementById('podium').innerHTML=ranked.map((r,i)=>`<div class="podium-card ${cls[i]||''}"><div class="podium-rank">#${i+1}</div><div class="podium-info"><div class="podium-name">${r.m}</div><div class="podium-meta">${r.n} runs · ${r.t.toFixed(1)} t/s · ${r.tm.toFixed(1)}s avg</div></div><div class="podium-score" style="color:${sc(r.s)}">${r.s.toFixed(2)}</div></div>`).join('');
+})();
+
+// Overview charts
+const bOpts=(max,label)=>({responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:12,padding:12,font:{size:11}}}},scales:{y:{beginAtZero:true,max,title:{display:!!label,text:label||''},grid:{color:'#1e2333'}},x:{grid:{display:false}}}});
+function avgMW(wf,f){return M.map(m=>{const r=D.filter(x=>x.model===m&&x.workflow===wf);return r.length?avg(r.map(x=>x[f])):0;});}
+
+new Chart(document.getElementById('cScoreWf'),{type:'bar',data:{labels:M,datasets:WF.map(w=>({label:w,data:avgMW(w,'score'),backgroundColor:w==='Direct-DE'?MC[0]:MC[1],borderRadius:6}))},options:bOpts(5,'Avg Score')});
+new Chart(document.getElementById('cTimeWf'),{type:'bar',data:{labels:M,datasets:WF.map(w=>({label:w,data:avgMW(w,'total_time'),backgroundColor:w==='Direct-DE'?MC[0]:MC[1],borderRadius:6}))},options:bOpts(null,'Seconds')});
+new Chart(document.getElementById('cTps'),{type:'bar',data:{labels:M,datasets:[{label:'t/s',data:M.map(m=>avg(D.filter(r=>r.model===m).map(r=>r.tps))),backgroundColor:MC.slice(0,M.length),borderRadius:6}]},options:{...bOpts(null,'Tokens/sec'),plugins:{legend:{display:false}}}});
+new Chart(document.getElementById('cLevel'),{type:'bar',data:{labels:M,datasets:LV.map(l=>({label:l,data:M.map(m=>avg(D.filter(r=>r.model===m&&r.level===l).map(r=>r.score))),backgroundColor:l==='L1-Recall'?MC[2]:MC[4],borderRadius:6}))},options:bOpts(5,'Avg Score')});
+
+// Donuts
+(function(){
+  const row=document.getElementById('donutRow');
+  M.forEach((m,i)=>{
+    const card=document.createElement('div');card.className='donut-card';
+    card.innerHTML=`<h4 style="color:${MC[i]}">${m}</h4><canvas id="dn${i}"></canvas>`;
+    row.appendChild(card);
+  });
+  M.forEach((m,i)=>{
+    new Chart(document.getElementById('dn'+i),{type:'doughnut',data:{labels:['1','2','3','4','5'],datasets:[{data:[1,2,3,4,5].map(s=>D.filter(r=>r.model===m&&r.score===s).length),backgroundColor:['#f87171','#fb9898','#fbbf24','#6ee7b7','#34d399'],borderWidth:0}]},options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:6,font:{size:10}}}}}});
+  });
+})();
+
+// Workflow advantage
+new Chart(document.getElementById('cWfAdv'),{type:'bar',data:{labels:M,datasets:[{label:'Direct-DE advantage',data:M.map(m=>{const de=avg(D.filter(r=>r.model===m&&r.workflow==='Direct-DE').map(r=>r.score)),tr=avg(D.filter(r=>r.model===m&&r.workflow==='Translated').map(r=>r.score));return+(de-tr).toFixed(3);}),backgroundColor:M.map(m=>{const de=avg(D.filter(r=>r.model===m&&r.workflow==='Direct-DE').map(r=>r.score)),tr=avg(D.filter(r=>r.model===m&&r.workflow==='Translated').map(r=>r.score));return de>=tr?'rgba(91,124,250,0.5)':'rgba(245,158,66,0.5)';}),borderRadius:6}]},options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'Score diff'},grid:{color:'#1e2333'}},y:{grid:{display:false}}}}});
+
+// ═══ RADAR ═══
+const rState={};M.forEach((m,i)=>rState[m]=i<3);
+const rCharts={};
+
+function buildToggles(){
+  document.getElementById('radarToggles').innerHTML=M.map((m,i)=>`<button class="toggle-btn ${rState[m]?'on':''}" style="${rState[m]?'border-color:'+MC[i]:''}" onclick="togR('${m}',${i},this)">${m}</button>`).join('');
+}
+function togR(m,i,b){rState[m]=!rState[m];b.classList.toggle('on');b.style.borderColor=rState[m]?MC[i]:'';updR();}
+function actM(){return M.filter(m=>rState[m]);}
+
+function rDS(labels,fn){
+  return actM().map(m=>{const i=M.indexOf(m);return{label:m,data:labels.map(l=>fn(m,l)),borderColor:MC[i],backgroundColor:MCA[i],pointBackgroundColor:MC[i],pointRadius:4,pointHoverRadius:7,borderWidth:2,fill:true};});
+}
+const rOpt={responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:12,padding:10,font:{size:11}}}},scales:{r:{beginAtZero:true,max:5,ticks:{stepSize:1,color:'#6b7394',backdropColor:'transparent',font:{size:10}},grid:{color:'#262d40'},pointLabels:{color:'#b0b5c8',font:{size:11.5,weight:'500'}},angleLines:{color:'#262d40'}}},animation:{duration:400}};
+
+function mkR(id,labels,fn){
+  const ctx=document.getElementById(id);
+  if(rCharts[id])rCharts[id].destroy();
+  rCharts[id]=new Chart(ctx,{type:'radar',data:{labels,datasets:rDS(labels,fn)},options:rOpt});
+}
+function updR(){
+  mkR('rSections',SEC,(m,s)=>avg(D.filter(r=>r.model===m&&r.section===s).map(r=>r.score)));
+  const maxT=Math.max(...D.map(r=>r.tps)),maxTm=Math.max(...D.map(r=>r.total_time));
+  mkR('rOverall',['Quality','Speed','Efficiency','L1-Recall','L2-Synthesis','Consistency'],(m,a)=>{
+    const rows=D.filter(r=>r.model===m);
+    switch(a){
+      case'Quality':return avg(rows.map(r=>r.score));
+      case'Speed':return norm(avg(rows.map(r=>r.tps)),0,maxT)*5;
+      case'Efficiency':return(1-norm(avg(rows.map(r=>r.total_time)),0,maxTm))*5;
+      case'L1-Recall':return avg(rows.filter(r=>r.level==='L1-Recall').map(r=>r.score));
+      case'L2-Synthesis':return avg(rows.filter(r=>r.level==='L2-Synthesis').map(r=>r.score));
+      case'Consistency':return Math.max(0,5-sd(rows.map(r=>r.score))*2);
+      default:return 0;
+    }
+  });
+  mkR('rMaterials',MAT,(m,mt)=>avg(D.filter(r=>r.model===m&&r.material===mt).map(r=>r.score)));
+  mkR('rWorkflow',['Direct-DE Quality','Translated Quality','Direct-DE Speed','Translated Speed'],(m,l)=>{
+    const p=l.split(' '),wf=p[0]==='Direct-DE'?'Direct-DE':'Translated',met=p.slice(-1)[0];
+    const rows=D.filter(r=>r.model===m&&r.workflow===wf);
+    return met==='Quality'?avg(rows.map(r=>r.score)):norm(avg(rows.map(r=>r.tps)),0,maxT)*5;
+  });
+  const ll=[];LV.forEach(l=>WF.forEach(w=>ll.push(l+' / '+w)));
+  mkR('rLevels',ll,(m,l)=>{const[lv,wf]=l.split(' / ');return avg(D.filter(r=>r.model===m&&r.level===lv&&r.workflow===wf).map(r=>r.score));});
+}
+buildToggles();updR();
+
+// ═══ HEAD-TO-HEAD ═══
+let h2hR=null,h2hS=null,h2hP=null;
+if(M.length>1)document.getElementById('h2hB').selectedIndex=1;
+
+function buildH2H(){
+  const mA=document.getElementById('h2hA').value,mB=document.getElementById('h2hB').value;
+  const rA=D.filter(r=>r.model===mA),rB=D.filter(r=>r.model===mB);
+  const iA=M.indexOf(mA),iB=M.indexOf(mB);
+  const maxT=Math.max(...D.map(r=>r.tps));
+
+  const attrs=['Quality','Speed','L1-Recall','L2-Synthesis','Direct-DE','Translated','Consistency'];
+  function av(rows,a){switch(a){
+    case'Quality':return avg(rows.map(r=>r.score));
+    case'Speed':return norm(avg(rows.map(r=>r.tps)),0,maxT)*5;
+    case'L1-Recall':return avg(rows.filter(r=>r.level==='L1-Recall').map(r=>r.score));
+    case'L2-Synthesis':return avg(rows.filter(r=>r.level==='L2-Synthesis').map(r=>r.score));
+    case'Direct-DE':return avg(rows.filter(r=>r.workflow==='Direct-DE').map(r=>r.score));
+    case'Translated':return avg(rows.filter(r=>r.workflow==='Translated').map(r=>r.score));
+    case'Consistency':return Math.max(0,5-sd(rows.map(r=>r.score))*2);
+    default:return 0;
+  }}
+
+  const ctx=document.getElementById('h2hRadar');
+  if(h2hR)h2hR.destroy();
+  h2hR=new Chart(ctx,{type:'radar',data:{labels:attrs,datasets:[
+    {label:mA,data:attrs.map(a=>av(rA,a)),borderColor:MC[iA],backgroundColor:MCA[iA],pointBackgroundColor:MC[iA],fill:true,borderWidth:2,pointRadius:4},
+    {label:mB,data:attrs.map(a=>av(rB,a)),borderColor:MC[iB],backgroundColor:MCA[iB],pointBackgroundColor:MC[iB],fill:true,borderWidth:2,pointRadius:4}
+  ]},options:{...rOpt,plugins:{...rOpt.plugins,title:{display:true,text:mA+' vs '+mB,font:{size:15,weight:'700'},color:'#e8eaf2',padding:{bottom:16}}}}});
+
+  // Metrics
+  const metrics=[
+    ['Avg Score',avg(rA.map(r=>r.score)).toFixed(2),avg(rB.map(r=>r.score)).toFixed(2),true],
+    ['Tokens/sec',avg(rA.map(r=>r.tps)).toFixed(1),avg(rB.map(r=>r.tps)).toFixed(1),true],
+    ['Avg Time',avg(rA.map(r=>r.total_time)).toFixed(1)+'s',avg(rB.map(r=>r.total_time)).toFixed(1)+'s',false],
+    ['L1-Recall',avg(rA.filter(r=>r.level==='L1-Recall').map(r=>r.score)).toFixed(2),avg(rB.filter(r=>r.level==='L1-Recall').map(r=>r.score)).toFixed(2),true],
+    ['L2-Synthesis',avg(rA.filter(r=>r.level==='L2-Synthesis').map(r=>r.score)).toFixed(2),avg(rB.filter(r=>r.level==='L2-Synthesis').map(r=>r.score)).toFixed(2),true],
+    ['Direct-DE',avg(rA.filter(r=>r.workflow==='Direct-DE').map(r=>r.score)).toFixed(2),avg(rB.filter(r=>r.workflow==='Direct-DE').map(r=>r.score)).toFixed(2),true],
+    ['Translated',avg(rA.filter(r=>r.workflow==='Translated').map(r=>r.score)).toFixed(2),avg(rB.filter(r=>r.workflow==='Translated').map(r=>r.score)).toFixed(2),true],
+    ['Consistency',(5-sd(rA.map(r=>r.score))*2).toFixed(2),(5-sd(rB.map(r=>r.score))*2).toFixed(2),true],
+  ];
+  let wA=0,wB=0;
+  metrics.forEach(([_,a,b,h])=>{const va=parseFloat(a),vb=parseFloat(b);if(h?va>vb:va<vb)wA++;else if(h?vb>va:vb<va)wB++;});
+
+  // Comparison bars
+  const barsEl=document.getElementById('h2hBars');
+  barsEl.innerHTML=metrics.map(([label,a,b,h])=>{
+    const va=parseFloat(a),vb=parseFloat(b),total=va+vb||1;
+    const pA=h?(va/total*100):(vb/(va+vb)*100), pB=100-pA;
+    return`<div class="cmp-bar-wrap"><div class="cmp-bar-label"><span>${mA}: ${a}</span><span>${label}</span><span>${mB}: ${b}</span></div><div class="cmp-bar"><div class="cmp-bar-left" style="width:${pA}%;background:${MC[iA]}">${pA>15?a:''}</div><div class="cmp-bar-right" style="width:${pB}%;background:${MC[iB]}">${pB>15?b:''}</div></div></div>`;
+  }).join('');
+
+  // Panels
+  const panels=document.getElementById('h2hPanels');
+  panels.innerHTML=[
+    [mA,iA,wA,metrics.map(([l,a,b,h])=>{const va=parseFloat(a),vb=parseFloat(b);return`<div class="metric-row"><span class="label">${l}</span><span class="val ${(h?va>vb:va<vb)?'win':'lose'}">${a}</span></div>`;}).join('')],
+    [mB,iB,wB,metrics.map(([l,a,b,h])=>{const va=parseFloat(a),vb=parseFloat(b);return`<div class="metric-row"><span class="label">${l}</span><span class="val ${(h?vb>va:vb<va)?'win':'lose'}">${b}</span></div>`;}).join('')]
+  ].map(([name,idx,wins,rows])=>`<div class="h2h-panel"><h3><div style="width:12px;height:12px;border-radius:50%;background:${MC[idx]}"></div>${name}</h3><div class="wins" style="color:${sc(wins>=4?5:wins>=2?3:1)}">${wins}</div><div class="wins-label">categories won</div>${rows}</div>`).join('');
+
+  // Section charts
+  if(h2hS)h2hS.destroy();
+  h2hS=new Chart(document.getElementById('h2hSec'),{type:'bar',data:{labels:SEC,datasets:[
+    {label:mA,data:SEC.map(s=>avg(rA.filter(r=>r.section===s).map(r=>r.score))),backgroundColor:MC[iA],borderRadius:6},
+    {label:mB,data:SEC.map(s=>avg(rB.filter(r=>r.section===s).map(r=>r.score))),backgroundColor:MC[iB],borderRadius:6}
+  ]},options:bOpts(5)});
+  if(h2hP)h2hP.destroy();
+  h2hP=new Chart(document.getElementById('h2hSpd'),{type:'bar',data:{labels:SEC,datasets:[
+    {label:mA,data:SEC.map(s=>avg(rA.filter(r=>r.section===s).map(r=>r.tps))),backgroundColor:MC[iA],borderRadius:6},
+    {label:mB,data:SEC.map(s=>avg(rB.filter(r=>r.section===s).map(r=>r.tps))),backgroundColor:MC[iB],borderRadius:6}
+  ]},options:bOpts(null,'t/s')});
+}
+buildH2H();
+
+// ═══ MODEL CARDS ═══
+(function(){
+  const g=document.getElementById('modelGrid');
+  const maxS=Math.max(...M.map(m=>avg(D.filter(r=>r.model===m).map(r=>r.score))));
+  const maxP=Math.max(...M.map(m=>avg(D.filter(r=>r.model===m).map(r=>r.tps))));
+  g.innerHTML=M.map((m,i)=>{
+    const rows=D.filter(r=>r.model===m),s=avg(rows.map(r=>r.score)),p=avg(rows.map(r=>r.tps));
+    const de=rows.filter(r=>r.workflow==='Direct-DE'),tr=rows.filter(r=>r.workflow==='Translated');
+    const l1=rows.filter(r=>r.level==='L1-Recall'),l2=rows.filter(r=>r.level==='L2-Synthesis');
+    const con=Math.max(0,5-sd(rows.map(r=>r.score))*2);
+    return`<div class="mcard" style="--c:${MC[i]}"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:${MC[i]}"></div>
+      <div class="mcard-header"><div class="mcard-name" style="color:${MC[i]}">${m}</div><div class="mcard-score" style="color:${sc(s)}">${s.toFixed(2)}</div></div>
+      <div class="pbar"><div class="pbar-fill" style="width:${s/5*100}%;background:${MC[i]}"></div></div>
+      <div style="height:0.75rem"></div>
+      <div class="mcard-row"><span class="k">Runs</span><span class="v">${rows.length}</span></div>
+      <div class="mcard-row"><span class="k">Direct-DE</span><span class="v">${de.length?avg(de.map(r=>r.score)).toFixed(2):'–'}</span></div>
+      <div class="mcard-row"><span class="k">Translated</span><span class="v">${tr.length?avg(tr.map(r=>r.score)).toFixed(2):'–'}</span></div>
+      <div class="mcard-row"><span class="k">L1-Recall</span><span class="v">${l1.length?avg(l1.map(r=>r.score)).toFixed(2):'–'}</span></div>
+      <div class="mcard-row"><span class="k">L2-Synthesis</span><span class="v">${l2.length?avg(l2.map(r=>r.score)).toFixed(2):'–'}</span></div>
+      <div class="mcard-row"><span class="k">Consistency</span><span class="v">${con.toFixed(2)}/5</span></div>
+      <div class="mcard-row"><span class="k">Tokens/sec</span><span class="v">${p.toFixed(1)}</span></div>
+      <div class="mcard-row"><span class="k">Avg Time</span><span class="v">${avg(rows.map(r=>r.total_time)).toFixed(1)}s</span></div>
+      <div class="mcard-row"><span class="k">Best / Worst</span><span class="v">${Math.max(...rows.map(r=>r.score))} / ${Math.min(...rows.map(r=>r.score))}</span></div>
+      <canvas id="mc${i}"></canvas>
+    </div>`;
+  }).join('');
+  // Mini bar charts in cards
+  M.forEach((m,i)=>{
+    new Chart(document.getElementById('mc'+i),{type:'bar',data:{labels:SEC,datasets:[{data:SEC.map(s=>avg(D.filter(r=>r.model===m&&r.section===s).map(r=>r.score))),backgroundColor:MC[i]+'88',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{display:false,max:5},x:{display:false}}}});
+  });
+})();
+
+// ═══ HEATMAP ═══
+function buildHeatmap(){
+  const wf=document.getElementById('hmWf').value,lv=document.getElementById('hmLvl').value;
+  let f=D;if(wf)f=f.filter(r=>r.workflow===wf);if(lv)f=f.filter(r=>r.level===lv);
+  const combos=[];MAT.forEach(mt=>SEC.forEach(s=>combos.push(mt+' / '+s)));
+  const g=document.getElementById('hmGrid');
+  g.style.gridTemplateColumns=`140px repeat(${combos.length},1fr)`;
+  let h='<div class="hm-hdr">Model</div>';
+  combos.forEach(c=>{h+=`<div class="hm-hdr">${c}</div>`;});
+  M.forEach(m=>{
+    h+=`<div class="hm-hdr">${m}</div>`;
+    combos.forEach(c=>{
+      const[mt,s]=c.split(' / ');
+      const rows=f.filter(r=>r.model===m&&r.material===mt&&r.section===s);
+      const v=rows.length?avg(rows.map(r=>r.score)):0;
+      h+=`<div class="hm-cell" title="${m} | ${c}: ${v.toFixed(2)}" style="background:${hc(v)}">${v?v.toFixed(1):'-'}</div>`;
+    });
+  });
+  g.innerHTML=h;
+}
+buildHeatmap();
+
+// ═══ DETAIL CHARTS ═══
+new Chart(document.getElementById('cHist'),{type:'bar',data:{labels:[1,2,3,4,5],datasets:M.map((m,i)=>({label:m,data:[1,2,3,4,5].map(s=>D.filter(r=>r.model===m&&r.score===s).length),backgroundColor:MC[i],borderRadius:4}))},options:{...bOpts(null,'Count'),scales:{x:{title:{display:true,text:'Score'},grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'Count'},ticks:{stepSize:1},grid:{color:'#1e2333'}}}}});
+new Chart(document.getElementById('cMat'),{type:'bar',data:{labels:MAT,datasets:M.map((m,i)=>({label:m,data:MAT.map(mt=>avg(D.filter(r=>r.model===m&&r.material===mt).map(r=>r.score))),backgroundColor:MC[i],borderRadius:6}))},options:bOpts(5)});
+new Chart(document.getElementById('cSec'),{type:'bar',data:{labels:SEC,datasets:M.map((m,i)=>({label:m,data:SEC.map(s=>avg(D.filter(r=>r.model===m&&r.section===s).map(r=>r.score))),backgroundColor:MC[i],borderRadius:6}))},options:bOpts(5)});
+new Chart(document.getElementById('cScatter'),{type:'scatter',data:{datasets:M.map((m,i)=>({label:m,data:D.filter(r=>r.model===m).map(r=>({x:r.total_time,y:r.score})),backgroundColor:MC[i],pointRadius:5,pointHoverRadius:9}))},options:{responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw.y+'/5 in '+c.raw.x.toFixed(1)+'s'}}},scales:{x:{title:{display:true,text:'Time (s)'},grid:{color:'#1e2333'}},y:{beginAtZero:true,max:5,title:{display:true,text:'Score'},grid:{color:'#1e2333'}}}}});
+new Chart(document.getElementById('cTrend'),{type:'line',data:{labels:MAT,datasets:M.map((m,i)=>({label:m,data:MAT.map(mt=>avg(D.filter(r=>r.model===m&&r.material===mt).map(r=>r.score))),borderColor:MC[i],pointBackgroundColor:MC[i],tension:.3,fill:false,pointRadius:5,borderWidth:2}))},options:bOpts(5)});
+new Chart(document.getElementById('cStacked'),{type:'bar',data:{labels:M,datasets:[{label:'Generation',data:M.map(m=>avg(D.filter(r=>r.model===m).map(r=>r.gen_time))),backgroundColor:MC[0],borderRadius:0},{label:'Translation',data:M.map(m=>avg(D.filter(r=>r.model===m&&r.workflow==='Translated').map(r=>r.trans_time))),backgroundColor:MC[1],borderRadius:0}]},options:{responsive:true,plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Time (s)'},grid:{color:'#1e2333'}}}}});
+
+// ═══ TABLE ═══
+let sCol=-1,sAsc=true;
+const flds=['model','material','section','level','workflow','gen_time','trans_time','total_time','tps','score'];
+
+function getF(){
+  const fm=document.getElementById('fModel').value,fmt=document.getElementById('fMat').value;
+  const fl=document.getElementById('fLvl').value,fs=document.getElementById('fSec').value;
+  const fw=document.getElementById('fWf').value,fms=parseInt(document.getElementById('fMinS').value)||0;
+  const q=document.getElementById('fSearch').value.toLowerCase();
+  let d=D;
+  if(fm)d=d.filter(r=>r.model===fm);if(fmt)d=d.filter(r=>r.material===fmt);
+  if(fl)d=d.filter(r=>r.level===fl);if(fs)d=d.filter(r=>r.section===fs);
+  if(fw)d=d.filter(r=>r.workflow===fw);if(fms>0)d=d.filter(r=>r.score>=fms);
+  if(q)d=d.filter(r=>r.reasoning.toLowerCase().includes(q));
+  return d;
+}
+function renderT(d){
+  document.getElementById('tInfo').textContent=`Showing ${d.length} of ${D.length} results`;
+  document.getElementById('tBody').innerHTML=d.map(r=>`<tr><td>${r.model}</td><td>${r.material}</td><td>${r.section}</td><td>${r.level}</td><td>${r.workflow}</td><td>${r.gen_time.toFixed(1)}</td><td>${r.trans_time.toFixed(1)}</td><td>${r.total_time.toFixed(1)}</td><td>${r.tps.toFixed(1)}</td><td><span class="badge b${r.score}">${r.score}/5</span></td><td class="reason">${r.reasoning}</td></tr>`).join('');
+}
+function filterTable(){const d=getF();if(sCol>=0)sortD(d);renderT(d);}
+function sortD(d){const f=flds[sCol];d.sort((a,b)=>{const va=typeof a[f]==='number'?a[f]:a[f].toLowerCase(),vb=typeof b[f]==='number'?b[f]:b[f].toLowerCase();return sAsc?(va>vb?1:-1):(va<vb?1:-1);});}
+function srt(c){
+  if(sCol===c)sAsc=!sAsc;else{sCol=c;sAsc=true;}
+  document.querySelectorAll('th').forEach((t,i)=>{t.classList.toggle('sorted',i===c);const a=t.querySelector('.arr');if(a)a.innerHTML=(i===c&&!sAsc)?'&#9660;':'&#9650;';});
+  filterTable();
+}
+renderT(D);
+</script>
+</body>
+</html>
